@@ -14,6 +14,7 @@
 html {
   height: 100%;
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 html,
@@ -40,20 +41,78 @@ a {
 }
 
 .fade-page {
-  animation: fadeIn 200ms ease-in;
+  animation: fadeIn 280ms cubic-bezier(.22,.68,0,1.1);
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 textarea.autosize {
   overflow: hidden;
+}
+
+/* ── Page & card entrance ─────────────────────────────────────────── */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.slide-up { animation: slideUp 320ms cubic-bezier(.22,.68,0,1.1) both; }
+.slide-up-1 { animation: slideUp 320ms cubic-bezier(.22,.68,0,1.1) 60ms  both; }
+.slide-up-2 { animation: slideUp 320ms cubic-bezier(.22,.68,0,1.1) 120ms both; }
+.slide-up-3 { animation: slideUp 320ms cubic-bezier(.22,.68,0,1.1) 180ms both; }
+.slide-up-4 { animation: slideUp 320ms cubic-bezier(.22,.68,0,1.1) 240ms both; }
+.slide-up-5 { animation: slideUp 320ms cubic-bezier(.22,.68,0,1.1) 300ms both; }
+.slide-up-6 { animation: slideUp 320ms cubic-bezier(.22,.68,0,1.1) 360ms both; }
+
+/* ── Registration step animations ─────────────────────────────────── */
+@keyframes stepIn {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes stepInBack {
+  from { opacity: 0; transform: translateX(-28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.step-in      { animation: stepIn     260ms cubic-bezier(.22,.68,0,1.2) both; }
+.step-in-back { animation: stepInBack 260ms cubic-bezier(.22,.68,0,1.2) both; }
+
+@keyframes popIn {
+  0%   { transform: scale(.85); opacity: 0; }
+  70%  { transform: scale(1.05); }
+  100% { transform: scale(1);   opacity: 1; }
+}
+.pop-in { animation: popIn 320ms cubic-bezier(.22,.68,0,1.2) both; }
+
+@keyframes pulse-ring {
+  0%   { transform: scale(1);    opacity: .6; }
+  100% { transform: scale(1.55); opacity: 0; }
+}
+.pulse-ring { animation: pulse-ring 1.6s ease-out infinite; }
+
+/* Orb float */
+@keyframes orbFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-18px) scale(1.04); }
+}
+.orb-float { animation: orbFloat 7s ease-in-out infinite; }
+.orb-float-slow { animation: orbFloat 11s ease-in-out infinite reverse; }
+
+/* Skill chip check */
+@keyframes checkBounce {
+  0%   { transform: scale(0); }
+  60%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.check-bounce { animation: checkBounce 220ms cubic-bezier(.22,.68,0,1.4) both; }
+
+/* Basic dark mode: body surface only for now, not a full site-wide theme yet. */
+html.theme-dark body {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+html.theme-dark .bg-white {
+  background-color: #1e293b;
 }

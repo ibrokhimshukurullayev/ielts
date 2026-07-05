@@ -1,5 +1,6 @@
 import { Inter } from "next/font/google";
-import { AppSidebar } from "@/src/widgets";
+import { AppSidebar, AuthGate, ThemeInit } from "@/src/widgets";
+import { Providers } from "./providers";
 import "./globals.css";
 
 const inter = Inter({
@@ -8,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "IELTStation — Practice IELTS Online",
+  title: "PrepZone — Practice IELTS Online",
   description:
     "Free IELTS practice tests: Reading, Listening, Writing and Speaking with instant scoring.",
 };
@@ -17,10 +18,15 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans">
-        <div className="flex min-h-screen flex-col lg:flex-row">
-          <AppSidebar />
-          <div className="min-w-0 flex-1">{children}</div>
-        </div>
+        <ThemeInit />
+        <Providers>
+          <AuthGate>
+            <div className="flex min-h-screen flex-col">
+              <AppSidebar />
+              <div className="min-w-0 flex-1 lg:pl-64">{children}</div>
+            </div>
+          </AuthGate>
+        </Providers>
       </body>
     </html>
   );

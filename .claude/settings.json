@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Start-Process \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe\")",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(docker --version)",
+      "Bash(ls \"c:\\\\Users\\\\ibrok\\\\OneDrive\\\\Desktop\")",
+      "Read(//c/Users/ibrok/OneDrive/Desktop/**)",
+      "PowerShell(& \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\resources\\\\bin\\\\docker.exe\" ps 2>&1)",
+      "Bash(ls \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\resources\\\\bin\\\\\" 2>&1 | head -20)",
+      "Read(//c/Program Files/Docker/Docker/resources/**)"
+    ]
+  }
+}

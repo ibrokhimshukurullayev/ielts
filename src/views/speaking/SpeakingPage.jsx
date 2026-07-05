@@ -48,8 +48,8 @@ export function SpeakingPage() {
     return () => clearInterval(intervalRef.current);
   }, [running, phase, part.durationSeconds]);
 
-  const finish = () => {
-    saveResult("speaking", { band: selfBand });
+  const finish = async () => {
+    await saveResult("speaking", { band: selfBand });
     window.sessionStorage.setItem(
       "ielts_last_attempt",
       JSON.stringify({ section: "speaking", band: selfBand })

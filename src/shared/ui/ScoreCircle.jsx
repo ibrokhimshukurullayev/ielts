@@ -37,12 +37,11 @@ export function ScoreCircle({ band, size = 180 }) {
         style={{ transition: "stroke-dashoffset 1s ease-out" }}
       />
       <text
-        x="50%"
-        y="50%"
+        x={size / 2}
+        y={size / 2}
         textAnchor="middle"
         dominantBaseline="middle"
-        className="rotate-90"
-        style={{ transform: `rotate(90deg)`, transformOrigin: "center" }}
+        transform={`rotate(90, ${size / 2}, ${size / 2})`}
         fontSize={size * 0.26}
         fontWeight="800"
         fill="#1e1b4b"

@@ -5,3 +5,4 @@ export * from "./ProgressBar";
 export * from "./ScoreCircle";
 export * from "./Container";
 export * from "./TimerBadge";
+export * from "./ExamModeBadge";

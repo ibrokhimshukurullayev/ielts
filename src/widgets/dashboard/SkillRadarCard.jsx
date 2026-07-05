@@ -1,66 +1,80 @@
 import { Card } from "@/src/shared";
 
-const AXES = [
-  { key: "reading", label: "Reading" },
-  { key: "listening", label: "Listening" },
-  { key: "writing", label: "Writing" },
-  { key: "speaking", label: "Speaking" },
+const SKILLS = [
+  { key: "reading", label: "Reading", color: "#1d4ed8" },
+  { key: "listening", label: "Listening", color: "#15803d" },
+  { key: "writing", label: "Writing", color: "#b45309" },
+  { key: "speaking", label: "Speaking", color: "#be185d" },
 ];
 
-const SIZE = 220;
-const CENTER = SIZE / 2;
-const MAX_RADIUS = SIZE / 2 - 36;
+const WIDTH = 460;
+const HEIGHT = 200;
+const PAD_X = 12;
+const PAD_Y = 16;
 const MAX_BAND = 9;
 
-function pointAt(index, total, radius) {
-  const angle = (Math.PI * 2 * index) / total - Math.PI / 2;
-  return [CENTER + radius * Math.cos(angle), CENTER + radius * Math.sin(angle)];
+function pointsFor(series) {
+  if (series.length === 0) return [];
+  const innerWidth = WIDTH - PAD_X * 2;
+  const innerHeight = HEIGHT - PAD_Y * 2;
+  return series.map((entry, i) => {
+    const x = PAD_X + (series.length === 1 ? innerWidth / 2 : (i / (series.length - 1)) * innerWidth);
+    const y = PAD_Y + innerHeight - (entry.band / MAX_BAND) * innerHeight;
+    return [x, y];
+  });
 }
 
-export function SkillRadarCard({ results }) {
-  const ringLevels = [0.25, 0.5, 0.75, 1];
-  const points = AXES.map((axis, i) => {
-    const band = results[axis.key]?.band ?? 0;
-    const radius = (band / MAX_BAND) * MAX_RADIUS;
-    return pointAt(i, AXES.length, radius);
-  });
-  const polygon = points.map((p) => p.join(",")).join(" ");
+export function SkillRadarCard({ results, history }) {
+  const hasAnyHistory = SKILLS.some((s) => (history?.[s.key]?.length ?? 0) > 0);
 
   return (
     <Card>
-      <p className="text-xs font-bold uppercase tracking-wide text-accent">Progress Radar</p>
+      <p className="text-xs font-bold uppercase tracking-wide text-accent">Progress over time</p>
       <p className="mt-2 text-lg font-bold text-navy">Skill shape</p>
+      <p className="mt-1 text-xs text-slate-400">See how each skill&apos;s band is improving across your attempts.</p>
 
-      <div className="mt-4 flex items-center justify-center">
-        <svg width={SIZE} height={SIZE}>
-          {ringLevels.map((level) => {
-            const ringPoints = AXES.map((_, i) => pointAt(i, AXES.length, MAX_RADIUS * level).join(","));
-            return (
-              <polygon key={level} points={ringPoints.join(" ")} fill="none" stroke="#e2e8f0" strokeWidth="1" />
-            );
-          })}
+      {!hasAnyHistory ? (
+        <p className="mt-6 rounded-lg bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
+          Complete a few tests to see your progress chart here.
+        </p>
+      ) : (
+        <div className="mt-4">
+          <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} width="100%" height={HEIGHT}>
+            {[0, 0.25, 0.5, 0.75, 1].map((level) => {
+              const y = PAD_Y + (HEIGHT - PAD_Y * 2) * (1 - level);
+              return <line key={level} x1={PAD_X} y1={y} x2={WIDTH - PAD_X} y2={y} stroke="#f1f5f9" strokeWidth="1" />;
+            })}
 
-          {AXES.map((axis, i) => {
-            const [x, y] = pointAt(i, AXES.length, MAX_RADIUS);
-            const [lx, ly] = pointAt(i, AXES.length, MAX_RADIUS + 16);
-            return (
-              <g key={axis.key}>
-                <line x1={CENTER} y1={CENTER} x2={x} y2={y} stroke="#e2e8f0" strokeWidth="1" />
-                <text x={lx} y={ly} textAnchor="middle" dominantBaseline="middle" fontSize="11" fill="#64748b">
-                  {axis.label}
-                </text>
-              </g>
-            );
-          })}
+            {SKILLS.map((skill) => {
+              const series = history?.[skill.key] ?? [];
+              if (series.length === 0) return null;
+              const points = pointsFor(series);
+              const path = points.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
+              return (
+                <g key={skill.key}>
+                  <path d={path} fill="none" stroke={skill.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  {points.map(([x, y], i) => (
+                    <circle key={i} cx={x} cy={y} r="3" fill={skill.color} />
+                  ))}
+                </g>
+              );
+            })}
+          </svg>
 
-          <polygon points={polygon} fill="#4f46e5" fillOpacity="0.18" stroke="#4f46e5" strokeWidth="2" />
-          {points.map(([x, y], i) => (
-            <circle key={AXES[i].key} cx={x} cy={y} r="3" fill="#4f46e5" />
-          ))}
-
-          <circle cx={CENTER} cy={CENTER} r="3" fill="#ef4444" />
-        </svg>
-      </div>
+          <div className="mt-4 flex flex-wrap gap-4">
+            {SKILLS.map((skill) => {
+              const band = results?.[skill.key]?.band;
+              return (
+                <div key={skill.key} className="flex items-center gap-1.5 text-xs text-slate-600">
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: skill.color }} />
+                  {skill.label}
+                  {band != null && <span className="font-bold text-navy">{band}</span>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

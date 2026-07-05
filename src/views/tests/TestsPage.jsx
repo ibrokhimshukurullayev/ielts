@@ -1,117 +1,99 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { LISTENING_SECTIONS, READING_PARTS, TASK1, TASK2 } from "@/src/features";
-import { Badge, Card } from "@/src/shared";
+import { useRouter } from "next/navigation";
+import { createDynamicExam, getExamStepUrl } from "@/src/features";
+import { TestGrid } from "@/src/widgets";
 
-const FILTER_TABS = [
-  { key: "real-exam", label: "Real Exam", enabled: true },
-  { key: "cambridge", label: "Cambridge", enabled: false },
-  { key: "gold", label: "Gold", enabled: false },
-  { key: "mock", label: "Mock", enabled: false },
+const TABS = [
+  { key: "READING", label: "Reading", icon: "book", iconBg: "bg-indigo-50 text-accent", hrefBase: "/reading" },
+  { key: "LISTENING", label: "Listening", icon: "headphones", iconBg: "bg-emerald-50 text-success", hrefBase: "/listening" },
 ];
-
-const SKILL_TABS = [
-  { key: "reading", label: "Reading" },
-  { key: "listening", label: "Listening" },
-  { key: "writing", label: "Writing" },
-];
-
-function getTests(skill) {
-  if (skill === "reading") {
-    return [
-      {
-        id: "reading-1",
-        title: "The Evolution of Urban Transport",
-        meta: `${READING_PARTS.length} Passages · 39 Questions`,
-        href: "/reading/urban-transport",
-      },
-    ];
-  }
-  if (skill === "listening") {
-    return [
-      {
-        id: "listening-1",
-        title: `Listening Practice — ${LISTENING_SECTIONS.length} Sections`,
-        meta: LISTENING_SECTIONS[0]?.title ?? "Full Test",
-        href: "/listening/campus-and-community",
-      },
-    ];
-  }
-  return [
-    { id: "writing-1", title: TASK1.title, meta: `Chart description · min ${TASK1.minWords} words`, href: "/writing/task-1" },
-    { id: "writing-2", title: TASK2.title, meta: `Essay · min ${TASK2.minWords} words`, href: "/writing/task-2" },
-  ];
-}
 
 export function TestsPage() {
-  const [skill, setSkill] = useState("reading");
-  const [search, setSearch] = useState("");
+  const router = useRouter();
+  const [tab, setTab] = useState("READING");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const tests = getTests(skill).filter((t) => t.title.toLowerCase().includes(search.toLowerCase()));
+  const handleStart = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/tests/random", { credentials: "include" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Something went wrong");
+
+      const { reading, listening, writing } = data;
+      const examId = createDynamicExam(reading, listening, writing);
+      const firstUrl = getExamStepUrl(examId, 0);
+      router.push(firstUrl);
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  const active = TABS.find((t) => t.key === tab);
 
   return (
-    <main className="fade-page mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <div className="flex flex-wrap gap-2">
-        {FILTER_TABS.map((tab) => (
-          <span
-            key={tab.key}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold ${
-              tab.enabled
-                ? "border-accent bg-indigo-50 text-accent"
-                : "border-slate-200 text-slate-400"
+    <main className="fade-page px-4 py-10 sm:px-6 lg:px-10">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-navy">Tests</h1>
+          <p className="mt-1 text-sm text-slate-500">Choose a Reading or Listening test to practice.</p>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleStart}
+          disabled={loading}
+          className="flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-500 active:scale-[0.98] disabled:opacity-60"
+        >
+          {loading ? (
+            <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M13 7l5 5m0 0l-5 5m5-5H6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+          Full Mock Exam
+        </button>
+      </div>
+
+      {error && (
+        <div className="mt-3 rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-600">{error}</div>
+      )}
+
+      {/* Skill tabs */}
+      <div className="mt-6 inline-flex rounded-xl bg-slate-100 p-1">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setTab(t.key)}
+            className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
+              tab === t.key ? "bg-white text-navy shadow-sm" : "text-slate-500 hover:text-navy"
             }`}
           >
-            {tab.label}
-            {!tab.enabled && <Badge tone="neutral">Soon</Badge>}
-          </span>
+            {t.label}
+          </button>
         ))}
       </div>
 
-      <Card className="mt-6">
-        <div className="flex border-b border-slate-100">
-          {SKILL_TABS.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setSkill(tab.key)}
-              className={`-mb-px border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
-                skill === tab.key ? "border-accent text-accent" : "border-transparent text-slate-500 hover:text-navy"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search tests by title..."
-          className="mt-4 w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-accent focus:outline-none"
+      <div className="mt-6">
+        <TestGrid
+          skill={active.key}
+          icon={active.icon}
+          iconBg={active.iconBg}
+          searchPlaceholder={`Search ${active.label.toLowerCase()} tests...`}
+          emptyLabel="No tests match your search."
+          hrefBase={active.hrefBase}
         />
-
-        <h2 className="mt-6 text-xs font-bold uppercase tracking-wide text-slate-400">
-          {SKILL_TABS.find((t) => t.key === skill)?.label} Question Sets
-        </h2>
-
-        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tests.length === 0 && <p className="text-sm text-slate-500">No tests match your search.</p>}
-          {tests.map((test) => (
-            <Link
-              key={test.id}
-              href={test.href}
-              className="flex flex-col rounded-xl border border-slate-200 px-4 py-4 transition-colors hover:border-accent hover:bg-indigo-50"
-            >
-              <span className="text-sm font-bold text-navy">{test.title}</span>
-              <span className="mt-1 text-xs text-slate-500">{test.meta}</span>
-              <span className="mt-3 text-sm font-semibold text-accent">Start →</span>
-            </Link>
-          ))}
-        </div>
-      </Card>
+      </div>
     </main>
   );
 }

@@ -1,3 +1,5 @@
+export * from "./auth";
+export * from "./profile";
 export * from "./home";
 export * from "./tests";
 export * from "./reading";
@@ -5,3 +7,7 @@ export * from "./listening";
 export * from "./writing";
 export * from "./speaking";
 export * from "./results";
+export * from "./exam";
+export * from "./teacher";
+export * from "./chat";
+export * from "./admin";

@@ -1,21 +1,40 @@
-const STORAGE_KEY = "ielts_results";
-
-export function getAllResults() {
-  if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(window.localStorage.getItem(STORAGE_KEY)) ?? {};
-  } catch {
-    return {};
-  }
+export async function getAllResults() {
+  const response = await fetch("/api/attempts/me", { credentials: "include" });
+  if (!response.ok) return {};
+  return response.json();
 }
 
-export function saveResult(section, result) {
-  if (typeof window === "undefined") return;
-  const all = getAllResults();
-  all[section] = { ...result, completedAt: new Date().toISOString() };
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+export async function saveResult(section, result) {
+  await fetch("/api/attempts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      skill: section.toUpperCase(),
+      band: result.band,
+      correctCount: result.correctCount,
+      total: result.total,
+      details: result.results,
+      testId: result.testId ?? null,
+    }),
+  });
 }
 
-export function getResult(section) {
-  return getAllResults()[section] ?? null;
+export async function getCompletedTestIds() {
+  const response = await fetch("/api/attempts/me/completed", { credentials: "include" });
+  if (!response.ok) return [];
+  const { testIds } = await response.json();
+  return testIds ?? [];
+}
+
+export async function getResult(section) {
+  const all = await getAllResults();
+  return all[section] ?? null;
+}
+
+export async function getAttemptHistory() {
+  const response = await fetch("/api/attempts/me/history", { credentials: "include" });
+  if (!response.ok) return {};
+  const { history } = await response.json();
+  return history ?? {};
 }

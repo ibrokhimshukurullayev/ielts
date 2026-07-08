@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { prisma } from "@/src/shared/lib/prisma";
 import { sanitizeUser } from "@/src/shared/lib/getSessionUser";
-import { createSessionToken, SESSION_COOKIE } from "@/src/shared/lib/session";
+import { setSessionCookies } from "@/src/shared/lib/session";
 
 export async function POST(request) {
   const body = await request.json();
@@ -35,14 +35,8 @@ export async function POST(request) {
     },
   });
 
-  const token = await createSessionToken(user.id);
   const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 30,
-  });
+  await setSessionCookies(cookieStore, user.id);
 
   return Response.json({ user: sanitizeUser(user) });
 }

@@ -12,7 +12,7 @@ export async function GET(request) {
   const teachers = await prisma.user.findMany({
     where: { role: "TEACHER" },
     orderBy: { createdAt: "desc" },
-    include: { students: true },
+    include: { students: true, groups: true },
   });
 
   const result = teachers.map((teacher) => ({
@@ -22,6 +22,7 @@ export async function GET(request) {
     email: teacher.email,
     createdAt: teacher.createdAt,
     studentCount: teacher.students.length,
+    groupCount: teacher.groups.length,
   }));
 
   return adminJson({ teachers: result }, undefined, request);

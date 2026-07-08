@@ -40,19 +40,6 @@ const SKILLS = [
       </svg>
     ),
   },
-  {
-    key: "speaking",
-    label: "Speaking",
-    href: "/speaking",
-    color: "bg-pink-50 text-pink-600",
-    ring: "ring-pink-200",
-    icon: (
-      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round"
-          d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
-      </svg>
-    ),
-  },
 ];
 
 function bandColor(band) {
@@ -64,7 +51,7 @@ function bandColor(band) {
 
 export function SkillStatsRow({ results }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       {SKILLS.map((skill) => {
         const r = results?.[skill.key];
         const band = r?.band ?? null;

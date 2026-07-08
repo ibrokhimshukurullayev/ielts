@@ -4,8 +4,6 @@ export function ListeningTestsListPage() {
   return (
     <TestListPage
       skill="LISTENING"
-      icon="headphones"
-      iconBg="bg-emerald-50 text-success"
       title="Listening Tests"
       subtitle="Choose a listening test to start."
       searchPlaceholder="Search tests by title..."

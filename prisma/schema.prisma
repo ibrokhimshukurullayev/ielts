@@ -34,6 +34,47 @@ model User {
   comments                  Comment[]        @relation("CommentSenders")
   studentWritingReviews     WritingReview[]  @relation("StudentWritingReviews")
   teacherWritingReviews     WritingReview[]  @relation("TeacherWritingReviews")
+  groups                    Group[]          @relation("TeacherGroups")
+  groupMemberships          GroupMember[]    @relation("GroupMemberships")
+  refreshTokens             RefreshToken[]
+}
+
+// Long-lived (7d) refresh tokens, stored hashed. Access tokens (15m JWT) are never persisted.
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// A teacher can create any number of named groups and add their own students to them.
+model Group {
+  id        String        @id @default(cuid())
+  teacherId String
+  teacher   User          @relation("TeacherGroups", fields: [teacherId], references: [id])
+  name      String
+  members   GroupMember[]
+  posts     Post[]
+  createdAt DateTime      @default(now())
+
+  @@index([teacherId])
+}
+
+model GroupMember {
+  id        String   @id @default(cuid())
+  groupId   String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User     @relation("GroupMemberships", fields: [studentId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([groupId, studentId])
+  @@index([studentId])
 }
 
 // 1-on-1 conversation between one teacher and one student.
@@ -64,11 +105,16 @@ model Message {
 // Group board: teacher writes posts, students/teacher comment on them.
 model Post {
   id        String    @id @default(cuid())
+  groupId   String
+  group     Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
   teacherId String
   teacher   User      @relation("TeacherPosts", fields: [teacherId], references: [id])
   text      String
   comments  Comment[]
   createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([groupId])
 }
 
 model Comment {
@@ -132,6 +178,7 @@ model WritingReview {
   aiBand          Float?
   teacherFeedback String?
   teacherBand     Float?
+  inlineComments  Json?
   status          String   @default("PENDING")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

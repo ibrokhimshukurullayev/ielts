@@ -5,3 +5,5 @@ export * from "./theme";
 export * from "./adminClient";
 export * from "./normalizeTestContent";
 export * from "./useElapsedTimer";
+export * from "./buildHighlightedSegments";
+export * from "./apiClient";

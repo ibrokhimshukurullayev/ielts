@@ -5,7 +5,7 @@ export async function getAllResults() {
 }
 
 export async function saveResult(section, result) {
-  await fetch("/api/attempts", {
+  const response = await fetch("/api/attempts", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
@@ -18,6 +18,10 @@ export async function saveResult(section, result) {
       testId: result.testId ?? null,
     }),
   });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error ?? "Could not save your result.");
+  }
 }
 
 export async function getCompletedTestIds() {

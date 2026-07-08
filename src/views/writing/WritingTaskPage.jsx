@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { appendExamResult, getExamLabel, getExamLength, getExamStepUrl, getWritingFeedback, saveResult } from "@/src/features";
+import Link from "next/link";
+import { appendExamResult, getExamLabel, getExamLength, getExamStepUrl } from "@/src/features";
 import { Button, Container, ExamModeBadge, TimerBadge, useAutosizeTextarea, useCountdown, useElapsedTimer } from "@/src/shared";
 import { WritingChart } from "@/src/widgets";
 
@@ -10,21 +11,31 @@ function wordCount(text) {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-async function submitToTeacher({ testId, taskTitle, prompt, essay, wordCount, taskNumber, aiBand }) {
-  try {
-    await fetch("/api/writing/submit", {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ testId, taskTitle, prompt, essay, wordCount, taskNumber, aiBand }),
-    });
-  } catch {
-    // silent — teacher submission is best-effort
+async function submitToTeacher({ testId, taskTitle, prompt, essay, wordCount, taskNumber }) {
+  const res = await fetch("/api/writing/submit", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ testId, taskTitle, prompt, essay, wordCount, taskNumber }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error ?? "Could not submit your essay.");
   }
 }
 
 // ── Submitted state shown after the essay is sent ─────────────────────────────
-function SubmittedView({ aiBand, errors, summary, hasTeacher, onNext }) {
+function SubmittedView({ hasTeacher, examMode, onNext, onWriteAgain }) {
+  if (examMode) {
+    return (
+      <div className="mx-auto max-w-2xl py-10">
+        <div className="flex justify-end">
+          <Button variant="primary" onClick={onNext}>Continue →</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-2xl space-y-4 py-10">
 
@@ -42,50 +53,38 @@ function SubmittedView({ aiBand, errors, summary, hasTeacher, onNext }) {
           <p className="mt-0.5 text-sm text-emerald-700">
             {hasTeacher
               ? "Your teacher will review your essay and send feedback."
-              : "Your result is being saved."}
+              : "Your essay has been saved."}
           </p>
         </div>
       </div>
 
-      {/* AI band */}
-      {aiBand != null && (
-        <div className="flex items-center gap-3 rounded-2xl bg-white px-6 py-4 shadow-sm">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xl font-extrabold text-accent">
-            {aiBand}
-          </div>
+      {/* Pending status */}
+      {hasTeacher && (
+        <div className="flex items-center gap-3 rounded-2xl bg-white px-6 py-5 shadow-sm">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50">
+            <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-amber-400" />
+          </span>
           <div>
-            <p className="text-sm font-bold text-navy">AI Grammar Score</p>
-            {summary && <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{summary}</p>}
+            <p className="text-sm font-bold text-navy">Pending review</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+              Your teacher will read your essay and give you a band score with feedback.
+            </p>
           </div>
+          <Link href="/writing/my-reviews" className="ml-auto shrink-0 text-xs font-semibold text-accent hover:underline">
+            Track it →
+          </Link>
         </div>
       )}
 
-      {/* Grammar errors */}
-      {errors?.length > 0 && (
-        <div className="rounded-2xl bg-white px-6 py-5 shadow-sm">
-          <p className="mb-3 text-sm font-bold text-navy">Grammar Errors</p>
-          <div className="space-y-3">
-            {errors.map((err, i) => (
-              <div key={i} className="rounded-xl border border-slate-100 p-4">
-                <p className="text-sm text-slate-700">
-                  <span className="rounded bg-rose-50 px-1 py-0.5 font-mono text-xs text-rose-700">&ldquo;{err.quote}&rdquo;</span>
-                </p>
-                <p className="mt-1.5 text-sm text-slate-600">{err.issue}</p>
-                <p className="mt-1.5 text-sm">
-                  <span className="font-semibold text-success">Correction: </span>
-                  <span className="text-slate-700">{err.suggestion}</span>
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {onNext && (
-        <div className="flex justify-end">
-          <Button variant="primary" onClick={onNext}>Continue →</Button>
-        </div>
-      )}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={onWriteAgain}
+          className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 shadow-sm transition hover:bg-slate-50 active:scale-[0.98]"
+        >
+          Write Again
+        </button>
+      </div>
     </div>
   );
 }
@@ -102,13 +101,15 @@ export function WritingTaskPage() {
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [aiFeedback, setAiFeedback] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetch(`/api/tests/${taskId}`)
       .then((res) => res.json())
-      .then((data) => setTask(data.test?.content ?? null));
+      .then((data) => {
+        const content = data.test?.content ?? {};
+        setTask({ ...content, title: data.test?.title ?? content.title ?? "" });
+      });
 
     fetch("/api/auth/me", { credentials: "include" })
       .then((r) => r.json())
@@ -117,7 +118,7 @@ export function WritingTaskPage() {
   }, [taskId]);
 
   const textareaRef = useAutosizeTextarea(text);
-  const taskNumber = (task?.minWords ?? 150) <= 200 ? 1 : 2;
+  const taskNumber = task?.taskNumber ?? ((task?.minWords ?? 150) <= 200 ? 1 : 2);
   const durationSeconds = taskNumber === 1 ? 20 * 60 : 40 * 60;
   const words = wordCount(text);
 
@@ -126,19 +127,6 @@ export function WritingTaskPage() {
     setSubmitting(true);
     setError(null);
     try {
-      // 1. AI grammar check
-      const result = await getWritingFeedback({
-        taskTitle: task.title,
-        prompt: task.prompt,
-        essay: text,
-        wordCount: words,
-        taskNumber,
-      });
-
-      setAiFeedback(result);
-      await saveResult("writing", { band: result.band });
-
-      // 2. Send to teacher (best-effort, silent on fail)
       await submitToTeacher({
         testId: taskId,
         taskTitle: task.title,
@@ -146,22 +134,20 @@ export function WritingTaskPage() {
         essay: text,
         wordCount: words,
         taskNumber,
-        aiBand: result.band,
       });
 
       setSubmitted(true);
 
-      // 3. If in exam mode, navigate to next step after short delay
       if (examId) {
-        appendExamResult(examId, { skill: "writing", slug: taskId, band: result.band });
+        appendExamResult(examId, { skill: "writing", slug: taskId, band: null });
       }
-    } catch {
-      setError("Could not connect to service. Please try again.");
+    } catch (err) {
+      setError(err.message || "Could not submit. Please try again.");
     } finally {
       setSubmitting(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [task, words, taskNumber, examId, stepIndex, taskId, submitted, submitting]);
+  }, [task, text, words, taskNumber, examId, taskId, submitted, submitting]);
 
   const handleNext = () => {
     const nextUrl = getExamStepUrl(examId, stepIndex + 1);
@@ -169,9 +155,16 @@ export function WritingTaskPage() {
   };
 
   const elapsed = useElapsedTimer(examId);
-  const { formatted, secondsLeft } = useCountdown(`ielts_writing_timer_${taskId}`, durationSeconds, {
+  const { formatted, secondsLeft, start } = useCountdown(`ielts_writing_timer_${taskId}`, durationSeconds, {
     onExpire: () => handleSubmit(),
   });
+
+  const handleWriteAgain = () => {
+    setText("");
+    setSubmitted(false);
+    setError(null);
+    start();
+  };
 
   if (!task) {
     return (
@@ -217,16 +210,36 @@ export function WritingTaskPage() {
       <Container className="py-8">
         {submitted ? (
           <SubmittedView
-            aiBand={aiFeedback?.band}
-            errors={aiFeedback?.errors}
-            summary={aiFeedback?.summary}
             hasTeacher={hasTeacher}
+            examMode={!!examId}
             onNext={examId ? handleNext : null}
+            onWriteAgain={handleWriteAgain}
           />
         ) : (
           <>
             <div className="rounded-2xl bg-white p-6 shadow-sm">
-              <p className="text-sm text-slate-700">{task.prompt}</p>
+              {taskNumber === 1 && (
+                <div className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-600">
+                  Task 1
+                </div>
+              )}
+              {taskNumber === 2 && (
+                <div className="mb-1 inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-600">
+                  Task 2
+                </div>
+              )}
+
+              <p className="mt-2 text-sm text-slate-700">{task.prompt}</p>
+
+              {task.imageUrl && taskNumber === 1 && (
+                <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                  <img
+                    src={task.imageUrl}
+                    alt="Task 1 diagram"
+                    className="mx-auto block max-h-80 w-full object-contain p-2"
+                  />
+                </div>
+              )}
 
               {task.chartData && (
                 <div className="mt-4">

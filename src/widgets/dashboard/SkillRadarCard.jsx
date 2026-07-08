@@ -4,7 +4,6 @@ const SKILLS = [
   { key: "reading", label: "Reading", color: "#1d4ed8" },
   { key: "listening", label: "Listening", color: "#15803d" },
   { key: "writing", label: "Writing", color: "#b45309" },
-  { key: "speaking", label: "Speaking", color: "#be185d" },
 ];
 
 const WIDTH = 460;

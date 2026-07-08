@@ -11,6 +11,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
+        testId: true,
         taskTitle: true,
         prompt: true,
         essay: true,
@@ -19,6 +20,7 @@ export async function GET() {
         aiBand: true,
         teacherFeedback: true,
         teacherBand: true,
+        inlineComments: true,
         status: true,
         createdAt: true,
         updatedAt: true,

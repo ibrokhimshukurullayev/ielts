@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useAddComment } from "@/src/features/chat";
+import { useAddComment, useEditPost } from "@/src/features/chat";
 
 const PALETTE = ["#6366f1","#0d9488","#b45309","#be185d","#0369a1","#65a30d","#7c3aed","#c2410c"];
 
@@ -59,10 +59,10 @@ function CommentRow({ comment, currentUserId }) {
 }
 
 /* ─── Comment input ─── */
-function CommentInput({ postId }) {
+function CommentInput({ groupId, postId }) {
   const [text, setText] = useState("");
   const ref = useRef(null);
-  const mutation = useAddComment(postId);
+  const mutation = useAddComment(groupId, postId);
 
   const send = (e) => {
     e.preventDefault();
@@ -95,10 +95,51 @@ function CommentInput({ postId }) {
   );
 }
 
+/* ─── Inline post editor ─── */
+function PostEditor({ groupId, post, onDone }) {
+  const [text, setText] = useState(post.text);
+  const mutation = useEditPost(groupId);
+
+  const save = () => {
+    const t = text.trim();
+    if (!t || mutation.isPending) return;
+    mutation.mutate({ postId: post.id, text: t }, { onSuccess: onDone });
+  };
+
+  return (
+    <div>
+      <textarea
+        autoFocus
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={3}
+        className="w-full resize-none rounded-xl border border-accent/40 bg-white px-3.5 py-2.5 text-[15px] leading-relaxed focus:outline-none focus:ring-2 focus:ring-accent/15"
+      />
+      {mutation.isError && <p className="mt-1 text-xs text-red-500">{mutation.error?.message}</p>}
+      <div className="mt-2 flex justify-end gap-2">
+        <button type="button" onClick={onDone} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-100">
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={save}
+          disabled={!text.trim() || mutation.isPending}
+          className="rounded-lg bg-accent px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-500 disabled:opacity-40"
+        >
+          {mutation.isPending ? "Saving…" : "Save"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Telegram-style post card ─── */
-export function PostCard({ post, currentUserId, canComment = true }) {
+export function PostCard({ groupId, post, currentUserId, canComment = true }) {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
   const count = post.comments?.length ?? 0;
+  const canEdit = post.teacher?.id === currentUserId;
+  const edited = post.updatedAt && post.updatedAt !== post.createdAt;
 
   return (
     <div className="overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(15,32,68,0.09)]">
@@ -115,12 +156,30 @@ export function PostCard({ post, currentUserId, canComment = true }) {
                 <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
               </svg>
             </div>
-            <span className="text-[11px] text-slate-400">{fmt(post.createdAt)}</span>
+            <span className="text-[11px] text-slate-400">
+              {fmt(post.createdAt)}{edited && " · edited"}
+            </span>
           </div>
+          {canEdit && !editing && (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="shrink-0 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-accent"
+              aria-label="Edit post"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Post text — Telegram channel style */}
-        <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-slate-800">{post.text}</p>
+        {editing ? (
+          <PostEditor groupId={groupId} post={post} onDone={() => setEditing(false)} />
+        ) : (
+          <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-slate-800">{post.text}</p>
+        )}
       </div>
 
       {/* Footer: comment count toggle */}
@@ -149,7 +208,7 @@ export function PostCard({ post, currentUserId, canComment = true }) {
               ))}
             </div>
           )}
-          {canComment && <CommentInput postId={post.id} />}
+          {canComment && <CommentInput groupId={groupId} postId={post.id} />}
         </div>
       )}
     </div>

@@ -15,8 +15,10 @@ export async function GET() {
 
   const students = await prisma.user.findMany({
     where: { teacherId: user.id },
-    orderBy: { name: "asc" },
-    include: { attempts: { orderBy: { createdAt: "desc" } } },
+    include: {
+      attempts: { orderBy: { createdAt: "desc" } },
+      groupMemberships: { include: { group: { select: { id: true, name: true } } } },
+    },
   });
 
   const todayStart = startOfToday();
@@ -54,8 +56,11 @@ export async function GET() {
       lastAttemptAt: student.attempts[0]?.createdAt ?? null,
       activeToday: practicedToday.length > 0,
       attemptsToday: practicedToday.length,
+      groups: student.groupMemberships.map((m) => ({ id: m.group.id, name: m.group.name })),
     };
   });
+
+  result.sort((a, b) => (b.overallBand ?? -1) - (a.overallBand ?? -1));
 
   return Response.json({ students: result });
 }

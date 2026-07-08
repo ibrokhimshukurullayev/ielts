@@ -1,23 +1,44 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getCurrentUser } from "@/src/features/auth";
-import { useGroup } from "@/src/features/chat";
-import { Avatar, PostCard } from "@/src/widgets";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { chatApi } from "@/src/features/chat";
+
+function GroupCard({ group }) {
+  return (
+    <Link href={`/chat/${group.id}`}>
+      <div className="flex h-full flex-col gap-2 rounded-2xl bg-white p-5 shadow-[0_2px_12px_rgba(15,32,68,0.07)] transition-colors hover:border-accent hover:bg-indigo-50/40">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-white">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+          </svg>
+        </div>
+        <p className="text-base font-bold text-navy">{group.name}</p>
+        <p className="mt-auto text-sm font-semibold text-slate-500">
+          {group.teacherName} · {group.memberCount} member{group.memberCount !== 1 ? "s" : ""}
+        </p>
+      </div>
+    </Link>
+  );
+}
 
 export function ChatPage() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [userLoading, setUserLoading] = useState(true);
-  const { data, isLoading } = useGroup();
+  const router = useRouter();
+  const [groups, setGroups] = useState(null);
 
   useEffect(() => {
-    getCurrentUser().then(setCurrentUser).finally(() => setUserLoading(false));
-  }, []);
+    chatApi.getMyGroups().then(({ groups }) => {
+      if (groups.length === 1) {
+        router.replace(`/chat/${groups[0].id}`);
+        return;
+      }
+      setGroups(groups);
+    });
+  }, [router]);
 
-  const posts = data?.posts ?? [];
-  const members = data?.members ?? [];
-
-  if (userLoading) {
+  if (groups === null) {
     return (
       <main className="fade-page flex min-h-[60vh] items-center justify-center">
         <p className="text-sm text-slate-500">Loading…</p>
@@ -25,7 +46,7 @@ export function ChatPage() {
     );
   }
 
-  if (!currentUser?.teacherId) {
+  if (groups.length === 0) {
     return (
       <main className="fade-page mx-auto max-w-2xl px-4 py-16 text-center sm:px-6">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
@@ -36,84 +57,20 @@ export function ChatPage() {
         </div>
         <h1 className="mt-4 text-xl font-bold text-navy">Not in a group yet</h1>
         <p className="mt-2 text-sm text-slate-500">
-          Once your teacher adds you to their group, messages will appear here.
+          Once your teacher adds you to one of their groups, messages will appear here.
         </p>
       </main>
     );
   }
 
   return (
-    <main className="fade-page mx-auto max-w-4xl px-4 py-0 sm:px-6">
-      <div className="flex min-h-screen gap-0 lg:gap-6">
-
-        {/* ── Feed ── */}
-        <div className="min-w-0 flex-1 py-6">
-          {/* Channel header */}
-          <div className="mb-5 flex items-center gap-3 rounded-2xl bg-white px-5 py-4 shadow-[0_2px_12px_rgba(15,32,68,0.08)]">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-accent text-white">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-base font-bold text-navy">Group Chat</p>
-              <p className="text-xs text-slate-400">{members.length} members</p>
-            </div>
-          </div>
-
-          {/* Loading */}
-          {isLoading && (
-            <div className="space-y-4">
-              {[1, 2].map((i) => (
-                <div key={i} className="h-32 animate-pulse rounded-2xl bg-white shadow-sm" />
-              ))}
-            </div>
-          )}
-
-          {/* Empty */}
-          {!isLoading && posts.length === 0 && (
-            <div className="rounded-2xl border-2 border-dashed border-slate-200 py-14 text-center">
-              <p className="text-sm font-semibold text-slate-400">No posts yet</p>
-              <p className="mt-1 text-xs text-slate-300">New posts from your teacher will appear here</p>
-            </div>
-          )}
-
-          {/* Posts */}
-          <div className="space-y-4">
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} currentUserId={currentUser?.id} canComment />
-            ))}
-          </div>
-        </div>
-
-        {/* ── Members sidebar ── */}
-        <div className="hidden w-52 shrink-0 py-6 lg:block">
-          <div className="sticky top-24 overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(15,32,68,0.08)]">
-            <div className="border-b border-slate-100 px-4 py-3">
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                Members ({members.length})
-              </p>
-            </div>
-            <ul className="divide-y divide-slate-50">
-              {members.map((m) => {
-                const isMe = m.id === currentUser?.id;
-                return (
-                  <li key={m.id} className="flex items-center gap-2.5 px-4 py-2.5">
-                    <Avatar name={m.name} size={28} />
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-semibold text-navy">
-                        {m.name}{isMe && <span className="ml-1 text-slate-400">(you)</span>}
-                      </p>
-                      <p className="truncate text-[10px] text-slate-400">@{m.username}</p>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </div>
-
+    <main className="fade-page max-w-5xl px-4 py-8 sm:px-6 lg:px-10">
+      <div>
+        <h1 className="text-2xl font-bold text-navy">Chat</h1>
+        <p className="mt-1 text-sm text-slate-500">Choose a group to see messages.</p>
+      </div>
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {groups.map((g) => <GroupCard key={g.id} group={g} />)}
       </div>
     </main>
   );

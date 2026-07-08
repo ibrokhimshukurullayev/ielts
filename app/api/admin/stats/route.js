@@ -10,24 +10,38 @@ export async function OPTIONS(request) {
 export async function GET(request) {
   if (!isAdminRequest(request)) return unauthorizedAdminResponse(request);
 
-  const [totalUsers, totalAttempts, totalTests] = await Promise.all([
-    prisma.user.count(),
-    prisma.attempt.count(),
-    prisma.test.count(),
-  ]);
+  const [studentCount, teacherCount, totalTests, totalAttempts, unassignedCount] =
+    await Promise.all([
+      prisma.user.count({ where: { role: "STUDENT" } }),
+      prisma.user.count({ where: { role: "TEACHER" } }),
+      prisma.test.count(),
+      prisma.attempt.count(),
+      prisma.user.count({ where: { role: "STUDENT", teacherId: null } }),
+    ]);
 
   const avgBandBySkill = {};
+  const testsBySkill = {};
+
   for (const skill of SKILLS) {
-    const result = await prisma.attempt.aggregate({
-      where: { skill },
-      _avg: { band: true },
-      _count: true,
-    });
-    avgBandBySkill[skill.toLowerCase()] = {
-      avgBand: result._avg.band ? Math.round(result._avg.band * 10) / 10 : null,
-      count: result._count,
+    const [agg, testCount] = await Promise.all([
+      prisma.attempt.aggregate({
+        where: { skill },
+        _avg: { band: true },
+        _count: true,
+      }),
+      prisma.test.count({ where: { skill } }),
+    ]);
+    const key = skill.toLowerCase();
+    avgBandBySkill[key] = {
+      avgBand: agg._avg.band ? Math.round(agg._avg.band * 10) / 10 : null,
+      count: agg._count,
     };
+    testsBySkill[key] = testCount;
   }
 
-  return adminJson({ totalUsers, totalAttempts, totalTests, avgBandBySkill }, undefined, request);
+  return adminJson(
+    { studentCount, teacherCount, totalTests, totalAttempts, unassignedCount, avgBandBySkill, testsBySkill },
+    undefined,
+    request
+  );
 }

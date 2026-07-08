@@ -324,7 +324,14 @@ export function ReadingExamPage() {
     const { correctCount, total, results } = scoreReadingAnswers(answers, content?.answers ?? {});
     const scaledScore = total > 0 ? Math.round((correctCount / total) * 40) : 0;
     const band = rawScoreToBand(scaledScore);
-    await saveResult("reading", { band, correctCount, total, results, testId: content?.dbId });
+    const passages = Array.isArray(content?.passages) && content.passages.length > 1
+      ? content.passages.map((p, i) => ({ number: p.number ?? i + 1, title: p.title, from: p.from ?? 1, to: p.to ?? Infinity }))
+      : null;
+    try {
+      await saveResult("reading", { band, correctCount, total, results, testId: content?.dbId });
+    } catch (err) {
+      console.error("Failed to save reading result:", err.message);
+    }
     reset();
     if (examId) {
       appendExamResult(examId, { skill: "reading", slug: testId, band, correctCount, total });
@@ -332,7 +339,7 @@ export function ReadingExamPage() {
       router.push(nextUrl ?? `/exam/${examId}/results`);
       return;
     }
-    window.sessionStorage.setItem("ielts_last_attempt", JSON.stringify({ section: "reading", band, correctCount, total, results }));
+    window.sessionStorage.setItem("ielts_last_attempt", JSON.stringify({ section: "reading", band, correctCount, total, results, passages }));
     router.push("/results");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answers, content, reset, router, examId, stepIndex, testId]);

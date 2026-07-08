@@ -81,7 +81,7 @@ export function ResultsPage() {
     );
   }
 
-  const { band, correctCount, total, section, results } = attempt;
+  const { band, correctCount, total, section, results, passages } = attempt;
   const meta = SECTION_META[section] ?? { label: section, emoji: "📝" };
   const theme = bandTheme(band);
   const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 0;
@@ -136,59 +136,96 @@ export function ResultsPage() {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* ── Answer Sheet ─────────────────────────────── */}
-        {results && Object.keys(results).length > 0 && (
-          <div className="slide-up-3 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-base font-bold text-navy">Answer Sheet</p>
-              <label className="flex cursor-pointer select-none items-center gap-2">
-                <span className="text-xs font-semibold text-slate-500">Show Correct Answers</span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={showAnswers}
-                  onClick={() => setShowAnswers((v) => !v)}
-                  className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${showAnswers ? "bg-emerald-500" : "bg-slate-200"}`}
-                >
-                  <span
-                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${showAnswers ? "translate-x-4.5" : "translate-x-0.5"}`}
-                  />
-                </button>
-              </label>
+      {/* ── Answer Sheet + Actions (wider) ─────────────── */}
+      <div className="mx-auto max-w-6xl space-y-4 px-4">
+        {results && Object.keys(results).length > 0 && (() => {
+          const sorted = Object.entries(results).sort((a, b) => Number(a[0]) - Number(b[0]));
+          const hasPassages = Array.isArray(passages) && passages.length > 1;
+          const columns = hasPassages
+            ? passages.map((p) => ({
+                label: p.title ? `Passage ${p.number} — ${p.title}` : `Passage ${p.number}`,
+                items: sorted.filter(([id]) => {
+                  const n = Number(id);
+                  return n >= (p.from ?? 1) && n <= (p.to ?? Infinity);
+                }),
+              }))
+            : (() => {
+                const mid = Math.ceil(sorted.length / 2);
+                return [
+                  { label: null, items: sorted.slice(0, mid) },
+                  { label: null, items: sorted.slice(mid) },
+                ];
+              })();
+
+          const Row = ({ id, r }) => (
+            <div
+              key={id}
+              className="flex items-center gap-3 border-b border-slate-100 px-4 py-2.5 last:border-b-0 hover:bg-slate-50"
+            >
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-300 text-xs font-bold text-white">
+                {id}
+              </span>
+              <span className="flex-1 truncate text-sm font-medium text-slate-600">
+                {(showAnswers ? r.correctAnswer : r.userAnswer) || "N/A"}
+              </span>
+              {r.isCorrect ? (
+                <svg className="h-4 w-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="h-4 w-4 shrink-0 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
             </div>
+          );
 
-            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {Object.entries(results)
-                .sort((a, b) => Number(a[0]) - Number(b[0]))
-                .map(([id, r], i) => (
-                  <div
-                    key={id}
-                    className={`flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 ${i % 2 === 0 ? "bg-slate-50" : "bg-white"}`}
+          return (
+            <div className="slide-up-3 overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+              <div className="flex flex-wrap items-center justify-between gap-3 p-6 pb-4">
+                <p className="text-lg font-bold text-navy">Answer Sheet</p>
+                <label className="flex cursor-pointer select-none items-center gap-2.5">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={showAnswers}
+                    onClick={() => setShowAnswers((v) => !v)}
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${showAnswers ? "bg-accent" : "bg-slate-200"}`}
                   >
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-400 text-xs font-bold text-white">
-                      {id}
-                    </span>
-                    <span className="flex-1 truncate text-sm text-slate-600">
-                      {(showAnswers ? r.correctAnswer : r.userAnswer) || "N/A"}
-                    </span>
-                    {r.isCorrect ? (
-                      <svg className="h-4 w-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : (
-                      <svg className="h-4 w-4 shrink-0 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
+                    <span
+                      className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${showAnswers ? "translate-x-5" : "translate-x-0"}`}
+                    />
+                  </button>
+                  <span className="text-sm font-semibold text-slate-500">Show Correct Answers</span>
+                </label>
+              </div>
+
+              <div
+                className={`grid grid-cols-1 divide-slate-100 border-t border-slate-100 sm:divide-x ${
+                  columns.length >= 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"
+                }`}
+              >
+                {columns.map((col, colIdx) => (
+                  <div key={colIdx} className="flex flex-col">
+                    {col.label && (
+                      <p className="border-b border-slate-100 bg-slate-50 px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                        {col.label}
+                      </p>
                     )}
+                    {col.items.map(([id, r]) => (
+                      <Row key={id} id={id} r={r} />
+                    ))}
                   </div>
                 ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ── Actions ──────────────────────────────────── */}
-        <div className="slide-up-4 flex gap-3 pt-1">
+        <div className="slide-up-4 mx-auto flex max-w-md gap-3 pt-1">
           <button
             type="button"
             onClick={() => router.back()}
@@ -198,8 +235,7 @@ export function ResultsPage() {
           </button>
           <Link
             href="/"
-            className="flex-1 rounded-xl py-3.5 text-center text-sm font-bold text-white shadow-sm transition active:scale-[0.98]"
-            style={{ background: theme.color }}
+            className="flex-1 rounded-xl bg-accent py-3.5 text-center text-sm font-bold text-white shadow-sm transition hover:bg-indigo-500 active:scale-[0.98]"
           >
             Home
           </Link>

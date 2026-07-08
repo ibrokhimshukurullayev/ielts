@@ -159,7 +159,11 @@ export function ListeningExamPage() {
     const { correctCount, total, results } = scoreListeningAnswers(answers, content?.answers ?? {});
     const scaledScore = total > 0 ? Math.round((correctCount / total) * 40) : 0;
     const band = rawScoreToBand(scaledScore);
-    await saveResult("listening", { band, correctCount, total, results, testId: content?.dbId });
+    try {
+      await saveResult("listening", { band, correctCount, total, results, testId: content?.dbId });
+    } catch (err) {
+      console.error("Failed to save listening result:", err.message);
+    }
     if (examId) {
       appendExamResult(examId, { skill: "listening", slug: testId, band, correctCount, total });
       const nextUrl = getExamStepUrl(examId, stepIndex + 1);

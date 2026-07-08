@@ -11,7 +11,8 @@ const SKILL_LABELS = { reading: "Reading", listening: "Listening", writing: "Wri
 function combineSkillBand(entries, skill) {
   if (entries.length === 0) return null;
   if (skill === "writing") {
-    return averageBand(entries.map((e) => e.band));
+    const bands = entries.map((e) => e.band).filter((b) => typeof b === "number" && !Number.isNaN(b));
+    return bands.length > 0 ? averageBand(bands) : null;
   }
   const sumCorrect = entries.reduce((sum, e) => sum + (e.correctCount ?? 0), 0);
   const sumTotal = entries.reduce((sum, e) => sum + (e.total ?? 0), 0);
@@ -78,7 +79,11 @@ export function ExamResultsPage() {
               <div key={skill} className="flex items-center justify-between py-3">
                 <span className="font-medium text-slate-700">{label}</span>
                 <span className="text-sm font-semibold text-slate-500">
-                  {sumTotal > 0 ? `${sumCorrect} / ${sumTotal} correct` : "—"}
+                  {sumTotal > 0
+                    ? `${sumCorrect} / ${sumTotal} correct`
+                    : skill === "writing" && entries.length > 0
+                      ? "Submitted — pending teacher review"
+                      : "—"}
                 </span>
               </div>
             );

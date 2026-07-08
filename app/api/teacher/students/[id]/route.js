@@ -40,9 +40,10 @@ export async function GET(request, { params }) {
 
 export async function DELETE(request, { params }) {
   const { id } = await params;
-  const { error } = await requireOwnedStudent(request, id);
+  const { error, user } = await requireOwnedStudent(request, id);
   if (error) return error;
 
+  await prisma.groupMember.deleteMany({ where: { studentId: id, group: { teacherId: user.id } } });
   await prisma.user.update({ where: { id }, data: { teacherId: null } });
   return Response.json({ ok: true });
 }

@@ -4,13 +4,13 @@ export const NAV_LINKS = [
   { href: "/reading", label: "Reading", icon: "book" },
   { href: "/listening", label: "Listening", icon: "headphones" },
   { href: "/writing", label: "Writing", icon: "pencil" },
-  { href: "/speaking", label: "Speaking", icon: "mic" },
 ];
 
 export const WRITING_REVIEW_NAV_LINK = { href: "/writing/my-reviews", label: "My Essays", icon: "review" };
 
 export const TEACHER_NAV_LINKS = [
   { href: "/teacher", label: "My Students", icon: "users" },
+  { href: "/teacher/groups", label: "Groups", icon: "groups" },
   { href: "/teacher/chat", label: "Chat", icon: "chat" },
   { href: "/teacher/writing", label: "Writing Reviews", icon: "review" },
 ];

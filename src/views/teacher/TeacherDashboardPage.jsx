@@ -183,10 +183,22 @@ function AddStudentBox({ onAdded }) {
   );
 }
 
-function StudentRow({ student, active, onSelect }) {
+function RankBadge({ rank }) {
+  const medal = rank === 1 ? "bg-amber-400 text-white" : rank === 2 ? "bg-slate-300 text-white" : rank === 3 ? "bg-amber-700 text-white" : "bg-slate-100 text-slate-500";
+  return (
+    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${medal}`}>
+      {rank}
+    </span>
+  );
+}
+
+function StudentRow({ student, rank, active, onSelect }) {
   return (
     <tr onClick={() => onSelect(student.id)}
       className={`cursor-pointer border-b border-slate-50 transition-colors last:border-0 ${active ? "bg-indigo-50" : "hover:bg-slate-50/60"}`}>
+      <td className="w-10 px-3 py-3.5">
+        <RankBadge rank={rank} />
+      </td>
       <td className="px-5 py-3.5">
         <div className="flex items-center gap-3">
           <Avatar name={student.name} active={student.activeToday} />
@@ -220,6 +232,30 @@ function StudentRow({ student, active, onSelect }) {
         </svg>
       </td>
     </tr>
+  );
+}
+
+function StudentTable({ students, selectedId, onSelect }) {
+  return (
+    <div className="overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(15,32,68,0.07)]">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b border-slate-100 text-left text-[11px] font-bold uppercase tracking-wide text-slate-400">
+            <th className="w-10 px-3 py-3">#</th>
+            <th className="px-5 py-3">Student</th>
+            <th className="px-5 py-3">Band</th>
+            <th className="px-5 py-3">Activity</th>
+            <th className="px-5 py-3">Status</th>
+            <th className="w-8 px-4 py-3" />
+          </tr>
+        </thead>
+        <tbody>
+          {students.map((s, i) => (
+            <StudentRow key={s.id} student={s} rank={i + 1} active={s.id === selectedId} onSelect={onSelect} />
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -376,13 +412,30 @@ export function TeacherDashboardPage() {
 
   const activeToday = students.filter((s) => s.activeToday).length;
 
+  const groupSections = [];
+  const ungrouped = [];
+  for (const s of students) {
+    if (!s.groups || s.groups.length === 0) {
+      ungrouped.push(s);
+      continue;
+    }
+    for (const g of s.groups) {
+      let section = groupSections.find((sec) => sec.id === g.id);
+      if (!section) {
+        section = { id: g.id, name: g.name, students: [] };
+        groupSections.push(section);
+      }
+      section.students.push(s);
+    }
+  }
+
   return (
-    <main className="fade-page mx-auto max-w-5xl px-4 py-8 sm:px-6">
+    <main className="fade-page max-w-5xl px-4 py-8 sm:px-6 lg:px-10">
       {/* Title row */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-navy">My Students</h1>
-          <p className="mt-1 text-sm text-slate-500">Track progress and manage who&apos;s in your group.</p>
+          <p className="mt-1 text-sm text-slate-500">Ranked by band within each group — top performers first.</p>
         </div>
         <AddStudentBox onAdded={handleAdded} />
       </div>
@@ -401,8 +454,8 @@ export function TeacherDashboardPage() {
         </div>
       )}
 
-      {/* Student table */}
-      <div className="mt-4">
+      {/* Student tables, ranked per group */}
+      <div className="mt-4 space-y-6">
         {loading ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
@@ -421,24 +474,31 @@ export function TeacherDashboardPage() {
             <p className="mt-1 text-xs text-slate-300">Search by name or username above to add your first student.</p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(15,32,68,0.07)]">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-100 text-left text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                  <th className="px-5 py-3">Student</th>
-                  <th className="px-5 py-3">Band</th>
-                  <th className="px-5 py-3">Activity</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="w-8 px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {students.map((s) => (
-                  <StudentRow key={s.id} student={s} active={s.id === selectedId} onSelect={setSelectedId} />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {groupSections.map((section) => (
+              <div key={section.id}>
+                <div className="mb-2 flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-navy">{section.name}</h2>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+                    {section.students.length}
+                  </span>
+                </div>
+                <StudentTable students={section.students} selectedId={selectedId} onSelect={setSelectedId} />
+              </div>
+            ))}
+
+            {ungrouped.length > 0 && (
+              <div>
+                <div className="mb-2 flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-navy">Ungrouped</h2>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
+                    {ungrouped.length}
+                  </span>
+                </div>
+                <StudentTable students={ungrouped} selectedId={selectedId} onSelect={setSelectedId} />
+              </div>
+            )}
+          </>
         )}
       </div>
 

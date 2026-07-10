@@ -306,7 +306,7 @@ function StepDate({ form, update, onNext }) {
         </div>
       )}
 
-      <p className="mt-3 text-center text-xs text-slate-400">Skip if you don't know the date yet</p>
+      <p className="mt-3 text-center text-xs text-slate-400">Skip if you don&apos;t know the date yet</p>
 
       <button type="button" onClick={onNext}
         className="mt-5 w-full rounded-xl bg-accent py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-500 active:scale-[0.98]">

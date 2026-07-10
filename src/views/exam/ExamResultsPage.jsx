@@ -61,7 +61,7 @@ export function ExamResultsPage() {
   return (
     <main className="fade-page mx-auto max-w-3xl px-4 py-12 sm:px-6">
       <h1 className="text-center text-2xl font-bold text-navy">{getExamLabel(examId)}</h1>
-      <p className="mt-1 text-center text-sm text-slate-500">Full exam complete — here's your combined result.</p>
+      <p className="mt-1 text-center text-sm text-slate-500">Full exam complete — here&apos;s your combined result.</p>
 
       <div className="mt-8 flex flex-col items-center">
         <ScoreCircle band={overallBand} />

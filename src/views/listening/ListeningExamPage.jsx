@@ -178,6 +178,24 @@ export function ListeningExamPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answers, content, router, examId, stepIndex, testId]);
 
+  const handleSubmitClick = () => {
+    const total = Object.keys(content?.questions ?? {}).length;
+    const answered = Object.values(answers).filter(Boolean).length;
+    if (answered < total && !window.confirm(`You have ${total - answered} unanswered question(s). Submit anyway?`)) {
+      return;
+    }
+    handleSubmit();
+  };
+
+  useEffect(() => {
+    function onBeforeUnload(e) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) { document.documentElement.requestFullscreen?.(); setIsFullscreen(true); }
     else { document.exitFullscreen?.(); setIsFullscreen(false); }
@@ -309,7 +327,7 @@ export function ListeningExamPage() {
               </button>
             ))}
           </div>
-          <Button variant="primary" onClick={handleSubmit}>
+          <Button variant="primary" onClick={handleSubmitClick}>
             Submit ({answeredCount}/{totalQuestions})
           </Button>
         </div>

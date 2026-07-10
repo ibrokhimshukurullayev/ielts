@@ -14,12 +14,8 @@ function EditorBody({ testId, initialSkill }) {
 
   useEffect(() => {
     if (!testId) return;
-    adminFetch("/api/admin/tests")
-      .then((data) => {
-        const found = data.tests.find((t) => t.id === testId);
-        if (!found) throw new Error("Test not found.");
-        setTest(found);
-      })
+    adminFetch(`/api/admin/tests/${testId}`)
+      .then((data) => setTest(data.test))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [testId]);

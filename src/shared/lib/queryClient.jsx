@@ -7,7 +7,7 @@ export function ReactQueryProvider({ children }) {
     () =>
       new QueryClient({
         defaultOptions: {
-          queries: { retry: 1, staleTime: 0 },
+          queries: { retry: 1, staleTime: 30_000 },
         },
       })
   );

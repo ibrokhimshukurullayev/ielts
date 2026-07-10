@@ -10,6 +10,8 @@ export async function GET() {
   const attempts = await prisma.attempt.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
+    distinct: ["skill"],
+    select: { skill: true, band: true, correctCount: true, total: true, details: true, createdAt: true },
   });
 
   const latestBySkill = {};

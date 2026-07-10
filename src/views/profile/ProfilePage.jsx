@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getCurrentUser, logout, updateProfile } from "@/src/features";
+import { getCurrentUser, logout, updateProfile, uploadTeacherPhoto } from "@/src/features";
 import { applyTheme, Button, Card, getStoredTheme } from "@/src/shared";
 
 const BAND_OPTIONS = Array.from({ length: 11 }, (_, i) => (4 + i * 0.5).toFixed(1));
@@ -22,6 +22,15 @@ function toBandValue(band) {
   return band != null ? Number(band).toFixed(1) : "";
 }
 
+function initials(name) {
+  return (name ?? "")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+}
+
 export function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -30,6 +39,8 @@ export function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState(null);
   const [theme, setTheme] = useState("light");
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState(null);
 
   useEffect(() => {
     setTheme(getStoredTheme());
@@ -69,6 +80,22 @@ export function ProfilePage() {
   };
 
   const isTeacher = user.role === "TEACHER";
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setPhotoUploading(true);
+    setPhotoError(null);
+    try {
+      const updated = await uploadTeacherPhoto(file);
+      setUser(updated);
+    } catch (err) {
+      setPhotoError(err.message);
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -120,17 +147,38 @@ export function ProfilePage() {
             </div>
           </div>
 
-          {/* Role badge — teacher only */}
+          {/* Role badge + photo — teacher only */}
           {isTeacher && (
-            <div>
-              <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">Role</label>
-              <div className="mt-1 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
-                <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                </svg>
-                <span className="text-sm font-semibold text-slate-700">Teacher</span>
+            <>
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">Role</label>
+                <div className="mt-1 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                  <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
+                  <span className="text-sm font-semibold text-slate-700">Teacher</span>
+                </div>
               </div>
-            </div>
+
+              <div className="sm:col-span-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">Photo</label>
+                <div className="mt-1 flex items-center gap-4">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.name} className="h-16 w-16 rounded-full object-cover" />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100 text-lg font-bold text-accent">
+                      {initials(user.name)}
+                    </div>
+                  )}
+                  <label className="cursor-pointer rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+                    {photoUploading ? "Uploading..." : user.avatarUrl ? "Change photo" : "Upload photo"}
+                    <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden"
+                      onChange={handlePhotoChange} disabled={photoUploading} />
+                  </label>
+                </div>
+                {photoError && <p className="mt-1.5 text-sm text-danger">{photoError}</p>}
+              </div>
+            </>
           )}
 
           {/* Student-only fields */}

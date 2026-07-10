@@ -9,7 +9,17 @@ export function nameColor(name = "") {
   return PALETTE[(name.charCodeAt(0) ?? 0) % PALETTE.length];
 }
 
-export function Avatar({ name, size = 36 }) {
+export function Avatar({ name, avatarUrl, size = 36 }) {
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name ?? ""}
+        className="shrink-0 rounded-full object-cover"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
   return (
     <span
       className="flex shrink-0 items-center justify-center rounded-full font-bold text-white"
@@ -35,7 +45,7 @@ function CommentRow({ comment, currentUserId }) {
   const mine = comment.sender?.id === currentUserId;
   return (
     <div className={`flex gap-2 ${mine ? "flex-row-reverse" : ""}`}>
-      <Avatar name={comment.sender?.name} size={26} />
+      <Avatar name={comment.sender?.name} avatarUrl={comment.sender?.avatarUrl} size={26} />
       <div className={`flex max-w-[78%] flex-col gap-0.5 ${mine ? "items-end" : "items-start"}`}>
         <div className="flex items-center gap-1.5">
           <span className="text-[11px] font-semibold text-slate-500">{comment.sender?.name}</span>
@@ -147,7 +157,7 @@ export function PostCard({ groupId, post, currentUserId, canComment = true }) {
       <div className="px-5 pt-5 pb-4">
         {/* Teacher row */}
         <div className="mb-3 flex items-center gap-2.5">
-          <Avatar name={post.teacher?.name} size={38} />
+          <Avatar name={post.teacher?.name} avatarUrl={post.teacher?.avatarUrl} size={38} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-bold text-navy">{post.teacher?.name}</span>

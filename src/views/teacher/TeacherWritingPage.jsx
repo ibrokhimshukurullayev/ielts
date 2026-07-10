@@ -593,7 +593,7 @@ export function TeacherWritingPage() {
         <div>
           <h1 className="text-2xl font-bold text-navy">Writing Reviews</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Review and give feedback on your students' essays
+            Review and give feedback on your students&apos; essays
           </p>
         </div>
         {pendingCount > 0 && (

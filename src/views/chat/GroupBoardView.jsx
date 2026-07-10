@@ -20,7 +20,7 @@ function PostForm({ groupId, teacher }) {
   return (
     <div className="overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(15,32,68,0.09)]">
       <div className="flex items-start gap-3 px-5 pt-4">
-        <Avatar name={teacher?.name} size={38} />
+        <Avatar name={teacher?.name} avatarUrl={teacher?.avatarUrl} size={38} />
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -148,7 +148,7 @@ export function GroupBoardView({ groupId, canPost, backHref, backLabel }) {
                   const isMe = m.id === currentUser?.id;
                   return (
                     <li key={m.id} className="flex items-center gap-2.5 px-4 py-2.5">
-                      <Avatar name={m.name} size={28} />
+                      <Avatar name={m.name} avatarUrl={m.avatarUrl} size={28} />
                       <div className="min-w-0">
                         <p className="truncate text-xs font-semibold text-navy">
                           {m.name}{isMe && <span className="ml-1 text-slate-400">(you)</span>}

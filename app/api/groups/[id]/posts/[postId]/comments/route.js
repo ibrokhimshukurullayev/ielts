@@ -30,7 +30,7 @@ export async function POST(request, { params }) {
 
     const comment = await prisma.comment.create({
       data: { postId, senderId: user.id, text: text.trim() },
-      include: { sender: { select: { id: true, name: true, role: true } } },
+      include: { sender: { select: { id: true, name: true, role: true, avatarUrl: true } } },
     });
 
     return Response.json({ comment });

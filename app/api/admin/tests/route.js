@@ -8,7 +8,14 @@ export async function OPTIONS(request) {
 export async function GET(request) {
   if (!isAdminRequest(request)) return unauthorizedAdminResponse(request);
 
-  const tests = await prisma.test.findMany({ orderBy: { createdAt: "asc" } });
+  const { searchParams } = new URL(request.url);
+  const skill = searchParams.get("skill");
+
+  const tests = await prisma.test.findMany({
+    where: skill ? { skill: skill.toUpperCase() } : undefined,
+    orderBy: { createdAt: "asc" },
+    select: { id: true, skill: true, slug: true, title: true, createdAt: true },
+  });
   return adminJson({ tests }, undefined, request);
 }
 

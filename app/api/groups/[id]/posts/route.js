@@ -29,10 +29,10 @@ export async function GET(_request, { params }) {
       where: { groupId: id },
       orderBy: { createdAt: "desc" },
       include: {
-        teacher: { select: { id: true, name: true, role: true } },
+        teacher: { select: { id: true, name: true, role: true, avatarUrl: true } },
         comments: {
           orderBy: { createdAt: "asc" },
-          include: { sender: { select: { id: true, name: true, role: true } } },
+          include: { sender: { select: { id: true, name: true, role: true, avatarUrl: true } } },
         },
       },
     });
@@ -65,7 +65,7 @@ export async function POST(request, { params }) {
     const post = await prisma.post.create({
       data: { groupId: id, teacherId: user.id, text: text.trim() },
       include: {
-        teacher: { select: { id: true, name: true, role: true } },
+        teacher: { select: { id: true, name: true, role: true, avatarUrl: true } },
         comments: true,
       },
     });

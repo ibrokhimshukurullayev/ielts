@@ -6,7 +6,9 @@ export function useCountdown(storageKey, durationSeconds, { onExpire, autoStart 
   const [secondsLeft, setSecondsLeft] = useState(durationSeconds);
   const [running, setRunning] = useState(autoStart);
   const onExpireRef = useRef(onExpire);
-  onExpireRef.current = onExpire;
+  useEffect(() => {
+    onExpireRef.current = onExpire;
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;

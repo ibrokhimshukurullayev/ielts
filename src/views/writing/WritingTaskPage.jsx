@@ -159,6 +159,16 @@ export function WritingTaskPage() {
     onExpire: () => handleSubmit(),
   });
 
+  useEffect(() => {
+    if (submitted) return;
+    function onBeforeUnload(e) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [submitted]);
+
   const handleWriteAgain = () => {
     setText("");
     setSubmitted(false);

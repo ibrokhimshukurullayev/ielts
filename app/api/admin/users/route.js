@@ -11,7 +11,19 @@ export async function GET(request) {
   const users = await prisma.user.findMany({
     where: { role: "STUDENT" },
     orderBy: { createdAt: "desc" },
-    include: { attempts: { orderBy: { createdAt: "desc" } }, teacher: true },
+    select: {
+      id: true,
+      name: true,
+      username: true,
+      email: true,
+      targetBand: true,
+      examDate: true,
+      createdAt: true,
+      teacherId: true,
+      teacher: { select: { name: true } },
+      attempts: { orderBy: { createdAt: "desc" }, select: { skill: true, band: true } },
+      _count: { select: { attempts: true } },
+    },
   });
 
   const result = users.map((user) => {
@@ -28,7 +40,7 @@ export async function GET(request) {
       targetBand: user.targetBand,
       examDate: user.examDate,
       createdAt: user.createdAt,
-      attemptCount: user.attempts.length,
+      attemptCount: user._count.attempts,
       latestBands: latestBySkill,
       teacherId: user.teacherId,
       teacherName: user.teacher?.name ?? null,

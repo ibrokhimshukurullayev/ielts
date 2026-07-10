@@ -5,6 +5,17 @@ export async function OPTIONS(request) {
   return adminPreflight(request);
 }
 
+export async function GET(request, { params }) {
+  if (!isAdminRequest(request)) return unauthorizedAdminResponse(request);
+
+  const { id } = await params;
+  const test = await prisma.test.findUnique({ where: { id } });
+  if (!test) {
+    return adminJson({ error: "Test not found." }, { status: 404 }, request);
+  }
+  return adminJson({ test }, undefined, request);
+}
+
 export async function PATCH(request, { params }) {
   if (!isAdminRequest(request)) return unauthorizedAdminResponse(request);
 

@@ -11,7 +11,7 @@ export async function GET(_request, { params }) {
     const { id } = await params;
     const group = await prisma.group.findUnique({
       where: { id },
-      include: { members: { include: { student: { select: { id: true, name: true, username: true } } } } },
+      include: { members: { include: { student: { select: { id: true, name: true, username: true, avatarUrl: true } } } } },
     });
 
     if (!group) {
@@ -29,7 +29,7 @@ export async function GET(_request, { params }) {
         id: group.id,
         name: group.name,
         isOwner,
-        members: group.members.map((m) => ({ id: m.student.id, name: m.student.name, username: m.student.username })),
+        members: group.members.map((m) => ({ id: m.student.id, name: m.student.name, username: m.student.username, avatarUrl: m.student.avatarUrl })),
       },
     });
   } catch (err) {

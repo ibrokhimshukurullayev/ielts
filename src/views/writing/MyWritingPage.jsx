@@ -87,7 +87,7 @@ function EssayWithComments({ essay, comments, flashId, onFlash }) {
           className="absolute z-20 w-64 -translate-x-1/2 -translate-y-full rounded-xl bg-slate-900 p-3 text-xs text-white shadow-xl"
           style={{ top: active.top, left: active.left }}
         >
-          <p className="mb-1 font-semibold text-amber-300">Teacher's comment</p>
+          <p className="mb-1 font-semibold text-amber-300">Teacher&apos;s comment</p>
           <p className="whitespace-pre-wrap leading-relaxed">{active.comment.comment}</p>
         </div>
       )}
@@ -201,7 +201,7 @@ function ReviewCard({ review }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
             </svg>
             <span className="text-xs font-bold text-accent">
-              {review.teacher?.name ?? "Teacher"}'s feedback
+              {review.teacher?.name ?? "Teacher"}&apos;s feedback
             </span>
             {review.teacherBand && (
               <span className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-bold ${bandColor(review.teacherBand)}`}>

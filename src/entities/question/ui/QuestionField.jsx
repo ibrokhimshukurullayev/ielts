@@ -19,6 +19,7 @@ export function QuestionField({ id, raw, value, onChange, correctAnswer }) {
   const isCorrect = correctAnswer !== undefined && normalize(value) === normalize(correctAnswer) && value !== "";
 
   if (question.type === QUESTION_TYPES.TFNG) {
+    const tfngOptions = question.options?.length ? question.options : TFNG_OPTIONS;
     return (
       <div>
         <div className="flex items-start gap-3">
@@ -26,7 +27,7 @@ export function QuestionField({ id, raw, value, onChange, correctAnswer }) {
           <p className="whitespace-pre-line text-sm font-medium text-slate-700">{question.text}</p>
         </div>
         <div className="mt-3 ml-10 flex flex-col gap-2">
-          {TFNG_OPTIONS.map((option) => {
+          {tfngOptions.map((option) => {
             const selected = value === option;
             const correct = selected && normalize(option) === normalize(correctAnswer);
             return (

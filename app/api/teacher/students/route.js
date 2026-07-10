@@ -15,9 +15,14 @@ export async function GET() {
 
   const students = await prisma.user.findMany({
     where: { teacherId: user.id },
-    include: {
-      attempts: { orderBy: { createdAt: "desc" } },
-      groupMemberships: { include: { group: { select: { id: true, name: true } } } },
+    select: {
+      id: true,
+      name: true,
+      username: true,
+      email: true,
+      targetBand: true,
+      attempts: { orderBy: { createdAt: "desc" }, select: { skill: true, band: true, createdAt: true } },
+      groupMemberships: { select: { group: { select: { id: true, name: true } } } },
     },
   });
 

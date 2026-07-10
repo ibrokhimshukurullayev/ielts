@@ -23,10 +23,10 @@ export async function PATCH(request, { params }) {
       where: { id: postId },
       data: { text: text.trim() },
       include: {
-        teacher: { select: { id: true, name: true, role: true } },
+        teacher: { select: { id: true, name: true, role: true, avatarUrl: true } },
         comments: {
           orderBy: { createdAt: "asc" },
-          include: { sender: { select: { id: true, name: true, role: true } } },
+          include: { sender: { select: { id: true, name: true, role: true, avatarUrl: true } } },
         },
       },
     });

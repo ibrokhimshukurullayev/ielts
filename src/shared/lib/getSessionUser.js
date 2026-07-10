@@ -31,5 +31,5 @@ export async function getSessionUser() {
     await setSessionCookies(cookieStore, userId, { previousRefreshToken: refreshToken });
   }
 
-  return prisma.user.findUnique({ where: { id: userId } });
+  return prisma.user.findUnique({ where: { id: userId }, omit: { passwordHash: true } });
 }

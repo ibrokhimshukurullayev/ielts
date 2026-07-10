@@ -26,6 +26,7 @@ model User {
   currentBand  Float?
   weeklyHours  Int?
   focusSkill   String?
+  avatarUrl    String?
   createdAt    DateTime  @default(now())
   attempts                  Attempt[]
   teacherConversations      Conversation[]   @relation("TeacherConversations")
@@ -37,6 +38,8 @@ model User {
   groups                    Group[]          @relation("TeacherGroups")
   groupMemberships          GroupMember[]    @relation("GroupMemberships")
   refreshTokens             RefreshToken[]
+
+  @@index([teacherId])
 }
 
 // Long-lived (7d) refresh tokens, stored hashed. Access tokens (15m JWT) are never persisted.
@@ -146,6 +149,8 @@ model Test {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   attempts  Attempt[]
+
+  @@index([skill])
 }
 
 model Attempt {
@@ -160,6 +165,9 @@ model Attempt {
   total        Int?
   details      Json?
   createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([testId])
 }
 
 // status: "PENDING" | "REVIEWED"

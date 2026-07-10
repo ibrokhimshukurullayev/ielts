@@ -15,7 +15,9 @@ export function SpeakingPage() {
   const router = useRouter();
   const [activePart, setActivePart] = useState(0);
   const [phase, setPhase] = useState("prep");
-  const [secondsLeft, setSecondsLeft] = useState(SPEAKING_PARTS[0].prepSeconds || SPEAKING_PARTS[0].durationSeconds);
+  const [secondsLeft, setSecondsLeft] = useState(
+    SPEAKING_PARTS[0].prepSeconds || SPEAKING_PARTS[0].durationSeconds,
+  );
   const [running, setRunning] = useState(false);
   const [selfBand, setSelfBand] = useState(7);
   const intervalRef = useRef(null);
@@ -52,7 +54,7 @@ export function SpeakingPage() {
     await saveResult("speaking", { band: selfBand });
     window.sessionStorage.setItem(
       "ielts_last_attempt",
-      JSON.stringify({ section: "speaking", band: selfBand })
+      JSON.stringify({ section: "speaking", band: selfBand }),
     );
     router.push("/results");
   };
@@ -69,7 +71,9 @@ export function SpeakingPage() {
               type="button"
               onClick={() => setActivePart(i)}
               className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-                activePart === i ? "bg-navy text-white" : "bg-slate-100 text-slate-500"
+                activePart === i
+                  ? "bg-navy text-white"
+                  : "bg-slate-100 text-slate-500"
               }`}
             >
               Part {p.id}
@@ -100,12 +104,17 @@ export function SpeakingPage() {
             </ul>
           )}
 
-          <div className="mt-6 flex items-center gap-4 rounded-xl bg-slate-50 p-4">
+          <div className="mt-6.4 flex items-center gap-4 rounded-xl bg-slate-50 p-4">
             <span className="text-sm font-semibold text-slate-500">
               {phase === "prep" ? "Preparation time" : "Speaking time"}
             </span>
-            <span className="font-mono text-2xl font-bold text-navy">{formatSeconds(secondsLeft)}</span>
-            <Button variant={running ? "outline" : "primary"} onClick={() => setRunning((r) => !r)}>
+            <span className="font-mono text-2xl font-bold text-navy">
+              {formatSeconds(secondsLeft)}
+            </span>
+            <Button
+              variant={running ? "outline" : "primary"}
+              onClick={() => setRunning((r) => !r)}
+            >
               {running ? "Pause" : "Start"}
             </Button>
           </div>
@@ -113,9 +122,12 @@ export function SpeakingPage() {
 
         {activePart === SPEAKING_PARTS.length - 1 && (
           <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-navy">Finish &amp; self-assess</h2>
+            <h2 className="text-lg font-bold text-navy">
+              Finish &amp; self-assess
+            </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Rate how confident you felt about your fluency, vocabulary, grammar and pronunciation.
+              Rate how confident you felt about your fluency, vocabulary,
+              grammar and pronunciation.
             </p>
             <input
               type="range"
@@ -126,7 +138,9 @@ export function SpeakingPage() {
               onChange={(e) => setSelfBand(Number(e.target.value))}
               className="mt-4 w-full accent-accent"
             />
-            <p className="mt-1 text-sm font-semibold text-navy">Estimated band: {selfBand}</p>
+            <p className="mt-1 text-sm font-semibold text-navy">
+              Estimated band: {selfBand}
+            </p>
             <Button variant="success" className="mt-4" onClick={finish}>
               Finish Test
             </Button>

@@ -64,7 +64,7 @@ export function SpeakingPage() {
       <Container className="py-8">
         <h1 className="text-lg font-bold text-navy">Speaking Test</h1>
 
-        <div className="mt-6.5 zdnfhijvbj flex gap-2">
+        <div className="mt-6 zdnfhijvbj flex gap-2">
           {SPEAKING_PARTS.map((p, i) => (
             <button
               key={p.id}

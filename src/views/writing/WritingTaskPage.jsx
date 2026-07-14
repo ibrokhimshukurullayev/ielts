@@ -28,7 +28,7 @@ async function submitToTeacher({ testId, taskTitle, prompt, essay, wordCount, ta
 function SubmittedView({ hasTeacher, examMode, onNext, onWriteAgain }) {
   if (examMode) {
     return (
-      <div className="mx-auto max-w-2xl py-10">
+      <div className="max-w-3xl py-10">
         <div className="flex justify-end">
           <Button variant="primary" onClick={onNext}>Continue →</Button>
         </div>
@@ -37,11 +37,11 @@ function SubmittedView({ hasTeacher, examMode, onNext, onWriteAgain }) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 py-10">
+    <div className="max-w-3xl space-y-4 py-10">
 
       {/* Sent banner */}
-      <div className="flex items-start gap-4 rounded-2xl bg-emerald-50 px-6 py-5">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+      <div className="flex items-start gap-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-7 py-6">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
@@ -60,8 +60,8 @@ function SubmittedView({ hasTeacher, examMode, onNext, onWriteAgain }) {
 
       {/* Pending status */}
       {hasTeacher && (
-        <div className="flex items-center gap-3 rounded-2xl bg-white px-6 py-5 shadow-sm">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50">
+        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-7 py-6 shadow-sm">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-50">
             <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-amber-400" />
           </span>
           <div>

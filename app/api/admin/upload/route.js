@@ -1,5 +1,4 @@
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 import { adminJson, adminPreflight, isAdminRequest, unauthorizedAdminResponse } from "@/src/shared/lib/adminAuth";
 
 export const runtime = "nodejs";
@@ -23,12 +22,8 @@ export async function POST(request) {
     return adminJson({ error: "Faqat rasm fayllar qabul qilinadi (jpg, png, webp, gif)." }, { status: 400 }, request);
   }
 
-  const filename = `task1-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "writing");
+  const filename = `writing/task1-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const blob = await put(filename, file, { access: "public", addRandomSuffix: false });
 
-  await mkdir(uploadDir, { recursive: true });
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(path.join(uploadDir, filename), buffer);
-
-  return adminJson({ url: `/uploads/writing/${filename}` }, undefined, request);
+  return adminJson({ url: blob.url }, undefined, request);
 }

@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { buildHighlightedSegments } from "@/src/shared";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { buildHighlightedSegments, computeOverallBand } from "@/src/shared";
 import { TaskChartPreview } from "@/src/widgets";
+
+const CRITERIA = [
+  { key: "taskScore", label: "Task Achievement" },
+  { key: "coherenceScore", label: "Coherence & Cohesion" },
+  { key: "lexicalScore", label: "Lexical Resource" },
+  { key: "grammarScore", label: "Grammatical Range & Accuracy" },
+];
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -275,9 +282,15 @@ function StatusBadge({ status }) {
 }
 
 // ── FeedbackForm (Telegram-style inline reply) ────────────────────────────────
-function FeedbackForm({ reviewId, draftComments, onRemoveDraft, onJumpToDraft, onSent, initialFeedback, initialBand }) {
+function FeedbackForm({ reviewId, draftComments, onRemoveDraft, onJumpToDraft, onSent, initialFeedback, initialScores }) {
   const [text, setText] = useState(initialFeedback ?? "");
-  const [band, setBand] = useState(initialBand != null ? String(initialBand) : "");
+  const [scores, setScores] = useState(() => {
+    const init = {};
+    for (const { key } of CRITERIA) {
+      init[key] = initialScores?.[key] != null ? String(initialScores[key]) : "";
+    }
+    return init;
+  });
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const textareaRef = useRef(null);
@@ -286,18 +299,24 @@ function FeedbackForm({ reviewId, draftComments, onRemoveDraft, onJumpToDraft, o
     textareaRef.current?.focus();
   }, []);
 
-  const canSend = text.trim().length > 0 || draftComments.length > 0 || band !== "";
+  const overall = useMemo(() => computeOverallBand(scores), [scores]);
+  const anyScoreSet = Object.values(scores).some((v) => v !== "");
+  const canSend = text.trim().length > 0 || draftComments.length > 0 || anyScoreSet;
 
   const handleSend = async () => {
     if (!canSend || sending) return;
     setSending(true);
     setError(null);
     try {
+      const scorePayload = {};
+      for (const { key } of CRITERIA) {
+        scorePayload[key] = scores[key] !== "" ? Number(scores[key]) : null;
+      }
       const res = await fetch(`/api/teacher/writing/${reviewId}/feedback`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feedback: text.trim(), band: band ? Number(band) : null, inlineComments: draftComments }),
+        body: JSON.stringify({ feedback: text.trim(), ...scorePayload, inlineComments: draftComments }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Error");
@@ -371,36 +390,48 @@ function FeedbackForm({ reviewId, draftComments, onRemoveDraft, onJumpToDraft, o
         className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/10"
       />
 
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        {/* Band selector */}
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-slate-500">Band:</label>
-          <select
-            value={band}
-            onChange={(e) => setBand(e.target.value)}
-            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-sm text-navy focus:border-accent focus:outline-none"
-          >
-            <option value="">—</option>
-            {[1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9].map((b) => (
-              <option key={b} value={b}>{b}</option>
-            ))}
-          </select>
+      {/* Band criteria scores */}
+      <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
+        <div className="mb-2.5 flex items-center justify-between">
+          <p className="text-xs font-bold text-navy">Band criteria <span className="font-normal text-slate-400">(optional)</span></p>
+          {overall != null && (
+            <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-black text-white">
+              Overall {overall}
+            </span>
+          )}
         </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {CRITERIA.map(({ key, label }) => (
+            <label key={key} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5">
+              <span className="text-[11px] font-semibold text-slate-500">{label}</span>
+              <select
+                value={scores[key]}
+                onChange={(e) => setScores((prev) => ({ ...prev, [key]: e.target.value }))}
+                className="rounded-md border border-slate-200 bg-white px-1.5 py-1 text-xs font-bold text-navy focus:border-accent focus:outline-none"
+              >
+                <option value="">—</option>
+                {[4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9].map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </div>
+      </div>
 
-        <div className="ml-auto flex items-center gap-2">
-          {error && <p className="text-xs text-red-500">{error}</p>}
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={!canSend || sending}
-            className="flex items-center gap-1.5 rounded-xl bg-accent px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-indigo-500 disabled:opacity-40"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-            {sending ? "Sending…" : "Send"}
-          </button>
-        </div>
+      <div className="mt-3 flex items-center justify-end gap-2">
+        {error && <p className="text-xs text-red-500">{error}</p>}
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={!canSend || sending}
+          className="flex items-center gap-1.5 rounded-xl bg-accent px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-indigo-500 disabled:opacity-40"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+          {sending ? "Sending…" : "Send"}
+        </button>
       </div>
     </div>
   );
@@ -509,7 +540,7 @@ function ReviewCard({ review: initialReview }) {
       </div>
 
       {/* ── Teacher feedback (if already reviewed) ── */}
-      {review.teacherFeedback && (
+      {(review.teacherFeedback || review.teacherBand) && (
         <div className="mx-5 mb-3 rounded-2xl bg-indigo-50 p-4">
           <div className="mb-2 flex items-center gap-2">
             <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -522,7 +553,21 @@ function ReviewCard({ review: initialReview }) {
               </span>
             )}
           </div>
-          <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">{review.teacherFeedback}</p>
+
+          {CRITERIA.some(({ key }) => review[key] != null) && (
+            <div className="mb-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              {CRITERIA.map(({ key, label }) => (
+                <div key={key} className="rounded-lg bg-white px-2 py-1.5 text-center">
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">{label.split(" ")[0]}</p>
+                  <p className="text-sm font-black text-navy">{review[key] ?? "—"}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {review.teacherFeedback && (
+            <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">{review.teacherFeedback}</p>
+          )}
         </div>
       )}
 
@@ -561,7 +606,12 @@ function ReviewCard({ review: initialReview }) {
             onJumpToDraft={handleJumpToDraft}
             onSent={handleSent}
             initialFeedback={review.teacherFeedback}
-            initialBand={review.teacherBand}
+            initialScores={{
+              taskScore: review.taskScore,
+              coherenceScore: review.coherenceScore,
+              lexicalScore: review.lexicalScore,
+              grammarScore: review.grammarScore,
+            }}
           />
         </div>
       )}

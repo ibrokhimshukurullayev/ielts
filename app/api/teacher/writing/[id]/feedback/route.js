@@ -1,5 +1,6 @@
 import { prisma } from "@/src/shared/lib/prisma";
 import { getSessionUser } from "@/src/shared/lib/getSessionUser";
+import { CRITERIA_KEYS, computeOverallBand } from "@/src/shared/lib/bandScore";
 
 export async function POST(request, { params }) {
   try {
@@ -9,16 +10,17 @@ export async function POST(request, { params }) {
     }
 
     const { id } = await params;
-    const { feedback, band, inlineComments } = await request.json();
+    const body = await request.json();
+    const { feedback, inlineComments } = body;
 
     const trimmedFeedback = feedback?.trim() || null;
     const newComments = Array.isArray(inlineComments)
       ? inlineComments.filter((c) => c?.quote?.trim() && c?.comment?.trim())
       : [];
-    const bandProvided = band !== undefined && band !== null && band !== "";
+    const scoresProvided = CRITERIA_KEYS.some((k) => body[k] !== undefined && body[k] !== null && body[k] !== "");
 
-    if (!trimmedFeedback && newComments.length === 0 && !bandProvided) {
-      return Response.json({ error: "Add feedback, a band, or at least one comment." }, { status: 400 });
+    if (!trimmedFeedback && newComments.length === 0 && !scoresProvided) {
+      return Response.json({ error: "Add feedback, a score, or at least one comment." }, { status: 400 });
     }
 
     const existing = await prisma.writingReview.findUnique({ where: { id } });
@@ -38,13 +40,20 @@ export async function POST(request, { params }) {
       })),
     ];
 
-    const teacherBand = band ? Number(band) : existing.teacherBand ?? null;
+    const mergedScores = {};
+    for (const key of CRITERIA_KEYS) {
+      const val = body[key];
+      mergedScores[key] = val !== undefined && val !== null && val !== "" ? Number(val) : (existing[key] ?? null);
+    }
+    const computedBand = computeOverallBand(mergedScores);
+    const teacherBand = computedBand ?? existing.teacherBand ?? null;
 
     const updated = await prisma.writingReview.update({
       where: { id },
       data: {
         teacherFeedback: trimmedFeedback ?? existing.teacherFeedback,
         teacherBand,
+        ...mergedScores,
         inlineComments: mergedComments,
         status: "REVIEWED",
       },

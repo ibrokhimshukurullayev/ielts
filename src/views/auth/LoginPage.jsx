@@ -28,21 +28,44 @@ export function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
-      <div className="slide-up w-full max-w-sm">
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10 lg:py-12">
+      <div className="slide-up mx-auto flex w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-[0_4px_32px_rgba(15,32,68,0.12)] lg:max-w-4xl">
 
-        {/* Logo */}
-        <Link href="/" className="mb-8 flex items-center justify-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-white text-sm font-black shadow-sm">P</div>
-          <span className="text-xl font-extrabold text-navy">Prep<span className="text-accent">Zone</span></span>
-        </Link>
+        {/* Brand panel — desktop only */}
+        <div className="relative hidden w-[42%] shrink-0 flex-col justify-between overflow-hidden bg-navy p-10 text-white lg:flex">
+          <div className="orb-float pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full bg-accent/30 blur-3xl" />
+          <div className="orb-float-slow pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-indigo-400/20 blur-3xl" />
 
-        {/* Card */}
-        <div className="rounded-2xl bg-white px-8 py-8 shadow-[0_4px_24px_rgba(15,32,68,0.10)]">
+          <Link href="/" className="relative flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-sm font-black backdrop-blur">P</div>
+            <span className="text-xl font-extrabold">Prep<span className="text-indigo-300">Zone</span></span>
+          </Link>
+
+          <div className="relative">
+            <h1 className="text-3xl font-black leading-tight">Good to see you again.</h1>
+            <p className="mt-3 text-sm leading-relaxed text-indigo-100/80">
+              Sign in to pick up your practice right where you left off.
+            </p>
+          </div>
+
+          <p className="relative text-xs text-indigo-200/60">
+            New here?{" "}
+            <Link href="/register" className="font-semibold text-white hover:underline">Create an account</Link>
+          </p>
+        </div>
+
+        {/* Form panel */}
+        <div className="flex w-full flex-col justify-center px-6 py-8 lg:w-[58%] lg:px-12 lg:py-10">
+
+          {/* Logo — mobile only */}
+          <Link href="/" className="mb-8 flex items-center justify-center gap-2 lg:hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-white text-sm font-black shadow-sm">P</div>
+            <span className="text-xl font-extrabold text-navy">Prep<span className="text-accent">Zone</span></span>
+          </Link>
 
           {/* Heading */}
           <div className="mb-6">
-            <h1 className="text-2xl font-extrabold text-navy">Welcome back</h1>
+            <h2 className="text-2xl font-extrabold text-navy">Welcome back</h2>
             <p className="mt-1 text-sm text-slate-500">Sign in to your account</p>
           </div>
 
@@ -109,7 +132,7 @@ export function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-5 text-center text-xs text-slate-400">
+          <p className="mt-5 text-center text-xs text-slate-400 lg:hidden">
             Don&apos;t have an account?{" "}
             <Link href="/register" className="font-semibold text-accent hover:underline">Register</Link>
           </p>

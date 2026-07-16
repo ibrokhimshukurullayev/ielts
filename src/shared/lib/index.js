@@ -7,3 +7,4 @@ export * from "./normalizeTestContent";
 export * from "./useElapsedTimer";
 export * from "./buildHighlightedSegments";
 export * from "./apiClient";
+export * from "./bandScore";

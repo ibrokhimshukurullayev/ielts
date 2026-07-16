@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { register } from "@/src/features";
 
 // ── constants ──────────────────────────────────────────────────────────────
-const STEPS = ["account", "band", "date", "skills", "hours"];
+const STEPS = ["account", "band", "date", "skills"];
 
 const SKILL_CONFIG = [
   {
@@ -98,20 +98,43 @@ function Progress({ step }) {
 function Shell({ step, direction, onBack, children }) {
   const idx = STEPS.indexOf(step);
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
-      <div className="slide-up w-full max-w-sm">
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10 lg:py-12">
+      <div className="slide-up mx-auto flex w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-[0_4px_32px_rgba(15,32,68,0.12)] lg:max-w-4xl">
 
-        {/* Logo */}
-        <Link href="/" className="mb-8 flex items-center justify-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-white text-sm font-black shadow-sm">P</div>
-          <span className="text-xl font-extrabold text-navy">Prep<span className="text-accent">Zone</span></span>
-        </Link>
+        {/* Brand panel — desktop only */}
+        <div className="relative hidden w-[42%] shrink-0 flex-col justify-between overflow-hidden bg-navy p-10 text-white lg:flex">
+          <div className="orb-float pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full bg-accent/30 blur-3xl" />
+          <div className="orb-float-slow pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-indigo-400/20 blur-3xl" />
 
-        {/* Card */}
-        <div className="overflow-hidden rounded-2xl bg-white shadow-[0_4px_24px_rgba(15,32,68,0.10)]">
+          <Link href="/" className="relative flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-sm font-black backdrop-blur">P</div>
+            <span className="text-xl font-extrabold">Prep<span className="text-indigo-300">Zone</span></span>
+          </Link>
+
+          <div className="relative">
+            <h1 className="text-3xl font-black leading-tight">Your IELTS band score starts here.</h1>
+            <p className="mt-3 text-sm leading-relaxed text-indigo-100/80">
+              Personalized practice across Reading, Listening, Writing and Speaking — tracked from day one to exam day.
+            </p>
+          </div>
+
+          <p className="relative text-xs text-indigo-200/60">
+            Already prepping?{" "}
+            <Link href="/login" className="font-semibold text-white hover:underline">Log in</Link>
+          </p>
+        </div>
+
+        {/* Form panel */}
+        <div className="w-full lg:w-[58%]">
+
+          {/* Logo — mobile only */}
+          <Link href="/" className="mt-8 mb-2 flex items-center justify-center gap-2 lg:hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-white text-sm font-black shadow-sm">P</div>
+            <span className="text-xl font-extrabold text-navy">Prep<span className="text-accent">Zone</span></span>
+          </Link>
 
           {/* Top bar */}
-          <div className="px-6 pt-5 pb-4">
+          <div className="px-6 pt-5 pb-4 lg:px-10 lg:pt-10">
             <div className="mb-3 flex items-center justify-between">
               {onBack ? (
                 <button type="button" onClick={onBack}
@@ -130,7 +153,7 @@ function Shell({ step, direction, onBack, children }) {
           </div>
 
           {/* Animated content */}
-          <div key={step} className={direction === "back" ? "step-in-back" : "step-in"}>
+          <div key={step} className={`${direction === "back" ? "step-in-back" : "step-in"} lg:px-4`}>
             {children}
           </div>
         </div>
@@ -317,7 +340,7 @@ function StepDate({ form, update, onNext }) {
 }
 
 // ── Step 4 — Focus skills ─────────────────────────────────────────────────
-function StepSkills({ form, update, onNext }) {
+function StepSkills({ form, update, onSubmit, sending, error }) {
   const selected = form.focusSkills;
 
   const toggle = (key) => {
@@ -369,48 +392,6 @@ function StepSkills({ form, update, onNext }) {
         </p>
       )}
 
-      <button type="button" onClick={onNext} disabled={selected.length === 0}
-        className="mt-5 w-full rounded-xl bg-accent py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-500 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed">
-        Continue →
-      </button>
-    </div>
-  );
-}
-
-// ── Step 5 — Weekly hours ─────────────────────────────────────────────────
-const HOUR_OPTIONS = [
-  { value: "3",  label: "1–3 hrs",   desc: "Light",     emoji: "🌱" },
-  { value: "7",  label: "5–7 hrs",   desc: "Steady",    emoji: "🔥" },
-  { value: "14", label: "10–14 hrs", desc: "Intensive", emoji: "⚡" },
-  { value: "21", label: "20+ hrs",   desc: "Maximum",   emoji: "🚀" },
-];
-
-function StepHours({ form, update, onSubmit, sending, error }) {
-  return (
-    <div className="px-6 pb-7">
-      <div className="mb-5">
-        <h2 className="text-xl font-extrabold text-navy">How many hours per week?</h2>
-        <p className="mt-0.5 text-sm text-slate-500">Time you can dedicate to studying</p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2.5">
-        {HOUR_OPTIONS.map((opt) => {
-          const active = form.weeklyHours === opt.value;
-          return (
-            <button key={opt.value} type="button" onClick={() => update("weeklyHours", opt.value)}
-              className={`flex flex-col items-start rounded-xl border p-4 text-left transition-all duration-200 active:scale-[0.97] ${
-                active
-                  ? "border-accent/30 bg-indigo-50 ring-2 ring-accent/30"
-                  : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white"
-              }`}>
-              <span className="mb-1.5 text-xl">{opt.emoji}</span>
-              <p className="text-sm font-bold text-navy">{opt.label}</p>
-              <p className="text-[10px] text-slate-400">{opt.desc}</p>
-            </button>
-          );
-        })}
-      </div>
-
       {error && (
         <div className="mt-3 flex items-center gap-2 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-600">
           <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -420,8 +401,8 @@ function StepHours({ form, update, onSubmit, sending, error }) {
         </div>
       )}
 
-      <button type="button" onClick={onSubmit} disabled={sending}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-500 active:scale-[0.98] disabled:opacity-60">
+      <button type="button" onClick={onSubmit} disabled={selected.length === 0 || sending}
+        className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-500 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed">
         {sending ? (
           <>
             <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -451,7 +432,6 @@ export function RegisterPage() {
     targetBand: "7.0",
     examDate: "",
     focusSkills: [],
-    weeklyHours: "",
   });
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
@@ -483,8 +463,7 @@ export function RegisterPage() {
       {step === "account" && <StepAccount {...stepProps} onNext={() => goTo("band")} />}
       {step === "band"    && <StepBand    {...stepProps} onNext={() => goTo("date")} />}
       {step === "date"    && <StepDate    {...stepProps} onNext={() => goTo("skills")} />}
-      {step === "skills"  && <StepSkills  {...stepProps} onNext={() => goTo("hours")} />}
-      {step === "hours"   && <StepHours   {...stepProps} onSubmit={submitFinal} sending={sending} error={error} />}
+      {step === "skills"  && <StepSkills  {...stepProps} onSubmit={submitFinal} sending={sending} error={error} />}
     </Shell>
   );
 }

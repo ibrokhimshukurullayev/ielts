@@ -4,6 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { buildHighlightedSegments } from "@/src/shared";
 import { TaskChartPreview } from "@/src/widgets";
 
+const CRITERIA = [
+  { key: "taskScore", label: "Task" },
+  { key: "coherenceScore", label: "Coherence" },
+  { key: "lexicalScore", label: "Lexical" },
+  { key: "grammarScore", label: "Grammar" },
+];
+
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
@@ -194,7 +201,7 @@ function ReviewCard({ review }) {
       )}
 
       {/* Teacher feedback bubble */}
-      {review.teacherFeedback ? (
+      {review.teacherFeedback || review.teacherBand ? (
         <div className="mx-5 mb-5 rounded-2xl bg-indigo-50 p-4">
           <div className="mb-3 flex items-center gap-2 border-l-2 border-accent pl-3">
             <svg className="h-3.5 w-3.5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -209,7 +216,21 @@ function ReviewCard({ review }) {
               </span>
             )}
           </div>
-          <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">{review.teacherFeedback}</p>
+
+          {CRITERIA.some(({ key }) => review[key] != null) && (
+            <div className="mb-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              {CRITERIA.map(({ key, label }) => (
+                <div key={key} className="rounded-lg bg-white px-2 py-1.5 text-center">
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+                  <p className="text-sm font-black text-navy">{review[key] ?? "—"}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {review.teacherFeedback && (
+            <p className="text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">{review.teacherFeedback}</p>
+          )}
           <p className="mt-2 text-right text-[10px] text-slate-400">{timeAgo(review.updatedAt)}</p>
         </div>
       ) : commentCount === 0 ? (
@@ -227,6 +248,7 @@ function ReviewCard({ review }) {
 export function MyWritingPage() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("ALL"); // "ALL" | "PENDING" | "REVIEWED"
 
   useEffect(() => {
     fetch("/api/writing/my-reviews", { credentials: "include" })
@@ -236,6 +258,8 @@ export function MyWritingPage() {
   }, []);
 
   const reviewed = reviews.filter((r) => r.status === "REVIEWED").length;
+  const pending = reviews.length - reviewed;
+  const visible = reviews.filter((r) => filter === "ALL" || r.status === filter);
 
   return (
     <main className="fade-page max-w-5xl px-4 py-8 sm:px-6 lg:px-10">
@@ -246,19 +270,28 @@ export function MyWritingPage() {
 
       {reviews.length > 0 && (
         <div className="slide-up-1 mb-5 flex flex-wrap gap-2">
-          <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
-            {reviews.length} submitted
-          </span>
-          {reviewed > 0 && (
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-              {reviewed} reviewed
-            </span>
-          )}
-          {reviews.length - reviewed > 0 && (
-            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-              {reviews.length - reviewed} pending
-            </span>
-          )}
+          {[
+            { key: "ALL", label: "All", count: reviews.length },
+            { key: "REVIEWED", label: "Reviewed", count: reviewed },
+            { key: "PENDING", label: "Pending", count: pending },
+          ].map(({ key, label, count }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setFilter(key)}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
+                filter === key
+                  ? "bg-accent text-white shadow-sm"
+                  : key === "REVIEWED"
+                    ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                    : key === "PENDING"
+                      ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                      : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              {count} {label.toLowerCase()}
+            </button>
+          ))}
         </div>
       )}
 
@@ -275,9 +308,19 @@ export function MyWritingPage() {
           <p className="mt-3 text-sm font-semibold text-slate-400">No essays submitted yet</p>
           <p className="mt-1 text-xs text-slate-300">Submit a writing task to see it here</p>
         </div>
+      ) : visible.length === 0 ? (
+        <div className="rounded-2xl border-2 border-dashed border-slate-200 py-16 text-center">
+          <svg className="mx-auto h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          <p className="mt-3 text-sm font-semibold text-slate-400">
+            {filter === "PENDING" ? "No pending essays" : "No reviewed essays yet"}
+          </p>
+        </div>
       ) : (
         <div className="space-y-5">
-          {reviews.map((r) => <ReviewCard key={r.id} review={r} />)}
+          {visible.map((r) => <ReviewCard key={r.id} review={r} />)}
         </div>
       )}
     </main>

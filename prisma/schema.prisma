@@ -186,6 +186,10 @@ model WritingReview {
   aiBand          Float?
   teacherFeedback String?
   teacherBand     Float?
+  taskScore       Float?
+  coherenceScore  Float?
+  lexicalScore    Float?
+  grammarScore    Float?
   inlineComments  Json?
   status          String   @default("PENDING")
   createdAt       DateTime @default(now())
